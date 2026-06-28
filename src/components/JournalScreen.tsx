@@ -49,6 +49,8 @@ export function JournalScreen({
             key={entry.id} 
             entry={entry} 
             currentUser={currentUser} 
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
         ))
       )}
@@ -56,7 +58,17 @@ export function JournalScreen({
   );
 }
 
-function JournalEntryCard({ entry, currentUser }: { entry: Greeting, currentUser: string | null }) {
+function JournalEntryCard({ 
+  entry, 
+  currentUser,
+  onEdit,
+  onDelete
+}: { 
+  entry: Greeting, 
+  currentUser: string | null,
+  onEdit: (greeting: Greeting) => void,
+  onDelete: (id: string) => void
+}) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -140,7 +152,6 @@ function JournalEntryCard({ entry, currentUser }: { entry: Greeting, currentUser
   };
 
   const hasLiked = currentUser ? (entry.read_by || []).includes(currentUser) : false;
-  const likesCount = (entry.read_by || []).length;
 
   const renderLikesText = () => {
     const likers = entry.read_by || [];
