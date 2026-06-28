@@ -56,6 +56,7 @@ function GreetingCard({
   onOpen, 
   currentUser,
   isAdmin, 
+  isSuperAdmin,
   onDelete, 
   onEdit,
   onHeart,
@@ -66,6 +67,7 @@ function GreetingCard({
   onOpen: () => void, 
   currentUser: string,
   isAdmin: boolean,
+  isSuperAdmin: boolean,
   onDelete: (id: string) => void,
   onEdit: (greeting: AppGreeting) => void,
   onHeart: (id: string) => void,
@@ -78,7 +80,6 @@ function GreetingCard({
   const isUploader = greeting.uploaded_by === currentUser;
   const isOldSender = !greeting.uploaded_by && isSender && isAdmin;
   const canView = !greeting.is_private || isMom || isUploader || isOldSender;
-  const isSuperAdmin = currentUser === 'אילה';
   const canEdit = isSuperAdmin || (isAdmin && (isUploader || (!greeting.uploaded_by && isSender)));
 
   if (!canView) {
@@ -249,6 +250,7 @@ export default function App() {
   const [showMomWelcome, setShowMomWelcome] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [nameInput, setNameInput] = useState('');
   
   // Guest Mode
@@ -292,9 +294,12 @@ export default function App() {
   useEffect(() => {
     const savedName = localStorage.getItem('birthday_user_name');
     const savedIsAdmin = localStorage.getItem('birthday_is_admin') === 'true';
+    const savedIsSuperAdmin = localStorage.getItem('birthday_is_superadmin') === 'true';
+    
     if (savedName) {
       setUserName(savedName);
       setIsAdmin(savedIsAdmin);
+      setIsSuperAdmin(savedIsSuperAdmin);
       setSenderInput(savedName);
       
       if (savedName === 'אמא' && !sessionStorage.getItem('mom_welcomed')) {
@@ -342,23 +347,28 @@ export default function App() {
     if (nameInput.trim()) {
       let finalName = nameInput.trim();
       let hasAdminRights = false;
+      let hasSuperAdminRights = false;
       
       // Secret super admin login logic
       if (finalName.toLowerCase().endsWith('ayala50')) {
          hasAdminRights = true;
+         hasSuperAdminRights = true;
          finalName = finalName.slice(0, -7).trim() || 'אילה';
       }
       // Secret admin login logic
       else if (finalName.toLowerCase().endsWith('mom50')) {
          hasAdminRights = true;
+         hasSuperAdminRights = false;
          finalName = finalName.slice(0, -5).trim() || 'מנהל'; 
       }
 
       setUserName(finalName);
       setIsAdmin(hasAdminRights);
+      setIsSuperAdmin(hasSuperAdminRights);
       setSenderInput(finalName);
       localStorage.setItem('birthday_user_name', finalName);
       localStorage.setItem('birthday_is_admin', hasAdminRights.toString());
+      localStorage.setItem('birthday_is_superadmin', hasSuperAdminRights.toString());
       
       if (finalName === 'אמא') {
         setShowMomWelcome(true);
@@ -585,7 +595,7 @@ export default function App() {
   };
 
   const handleApprove = async (id: string) => {
-    if (userName !== 'אילה') return;
+    if (!isSuperAdmin) return;
     
     const toastId = toast.loading('מאשר ברכה...');
     try {
@@ -651,13 +661,15 @@ export default function App() {
             className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
             onClick={async () => {
               toast.dismiss(t.id);
-              const { error } = await supabase.from('greetings').delete().eq('id', id);
-              if (error) {
-                toast.error('שגיאה במחיקה', { duration: 3000 });
-              } else {
-                toast.success('הברכה נמחקה', { duration: 3000 });
-                fetchGreetings();
-              }
+              setTimeout(async () => {
+                const { error } = await supabase.from('greetings').delete().eq('id', id);
+                if (error) {
+                  toast.error('שגיאה במחיקה', { id: 'del-error', duration: 3000 });
+                } else {
+                  toast.success('הברכה נמחקה', { id: 'del-success', duration: 3000 });
+                  fetchGreetings();
+                }
+              }, 100);
             }}
           >
             כן, למחוק
@@ -950,17 +962,18 @@ export default function App() {
       <main className="relative z-10 flex-1 overflow-y-auto p-5 space-y-8 pb-32">
         {loading ? (
           <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
-        ) : greetings.filter(g => isAdmin || (g.is_approved !== false)).length === 0 ? (
+        ) : greetings.filter(g => isSuperAdmin || (g.is_approved !== false)).length === 0 ? (
           <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
         ) : (
           <AnimatePresence>
-            {greetings.filter(g => isAdmin || (g.is_approved !== false)).map((greeting) => (
+            {greetings.filter(g => isSuperAdmin || (g.is_approved !== false)).map((greeting) => (
               <GreetingCard 
                 key={greeting.id} 
                 greeting={greeting} 
                 onOpen={() => handleOpen(greeting.id)} 
                 currentUser={userName} 
                 isAdmin={isAdmin}
+                isSuperAdmin={isSuperAdmin}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
                 onHeart={handleHeart}
