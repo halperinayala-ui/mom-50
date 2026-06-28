@@ -981,14 +981,15 @@ export default function App() {
       </header>
 
       <main className="relative z-10 flex-1 overflow-y-auto pb-24">
-        {activeScreen === 'boarding' && <BoardingPassScreen />}
+        {activeScreen === 'boarding' && <BoardingPassScreen userName={userName} />}
         
         {activeScreen === 'journal' && (
           <JournalScreen 
             greetings={greetings} 
             currentUser={userName} 
-            isMom={userName === 'אמא'} 
+            isTraveler={userName === 'אמא' || userName === 'אבא'} 
             onUploadClick={() => {
+              resetForm();
               setIsJournalUpload(true);
               setShowUploadModal(true);
             }} 
@@ -1107,7 +1108,7 @@ export default function App() {
             className="fixed inset-0 z-50 bg-[#FDFBF7] flex flex-col overflow-y-auto pb-8"
           >
             <div className="sticky top-0 bg-[#FDFBF7]/90 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-primary/10 shadow-sm z-10">
-              <h2 className="text-xl font-heading font-bold text-primary">{editingGreetingId ? 'עריכת ברכה' : 'ברכה חדשה'}</h2>
+              <h2 className="text-xl font-heading font-bold text-primary">{isJournalUpload ? (editingGreetingId ? 'עריכת חוויה' : 'שיתוף חוויה') : (editingGreetingId ? 'עריכת ברכה' : 'ברכה חדשה')}</h2>
               <button onClick={() => { setShowUploadModal(false); resetForm(); }} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
                 <X className="w-5 h-5 text-gray-600" />
               </button>
@@ -1115,17 +1116,19 @@ export default function App() {
             
             <form onSubmit={handleUploadSubmit} className="p-6 space-y-6">
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">ממי הברכה?</label>
-                <input 
-                  type="text" 
-                  value={senderInput}
-                  onChange={e => setSenderInput(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 text-lg"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">אפשר לשנות את השם אם מעלים בשם מישהו אחר (למשל: "סבתא")</p>
-              </div>
+              {!isJournalUpload && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ממי הברכה?</label>
+                  <input 
+                    type="text" 
+                    value={senderInput}
+                    onChange={e => setSenderInput(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 text-lg"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">אפשר לשנות את השם אם מעלים בשם מישהו אחר (למשל: "סבתא")</p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">סוג הברכה</label>
@@ -1186,7 +1189,7 @@ export default function App() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">טקסט הברכה {type !== 'text' && '(אופציונלי)'}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{isJournalUpload ? 'טקסט התיאור' : 'טקסט הברכה'} {type !== 'text' && '(אופציונלי)'}</label>
                 <textarea 
                   value={content}
                   onChange={e => setContent(e.target.value)}
@@ -1197,26 +1200,28 @@ export default function App() {
                 ></textarea>
               </div>
               
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <input 
-                  type="checkbox" 
-                  id="privateCheckbox"
-                  checked={isPrivate}
-                  onChange={e => setIsPrivate(e.target.checked)}
-                  className="w-5 h-5 text-primary rounded focus:ring-primary"
-                />
-                <label htmlFor="privateCheckbox" className="text-sm text-gray-700 flex flex-col">
-                  <span className="font-bold flex items-center gap-1"><Lock className="w-3 h-3" /> ברכה אישית</span>
-                  <span className="text-xs text-gray-500">רק אמא ואני נוכל לראות את הברכה הזו.</span>
-                </label>
-              </div>
+              {!isJournalUpload && (
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <input 
+                    type="checkbox" 
+                    id="privateCheckbox"
+                    checked={isPrivate}
+                    onChange={e => setIsPrivate(e.target.checked)}
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
+                  />
+                  <label htmlFor="privateCheckbox" className="text-sm text-gray-700 flex flex-col">
+                    <span className="font-bold flex items-center gap-1"><Lock className="w-3 h-3" /> ברכה אישית</span>
+                    <span className="text-xs text-gray-500">רק אמא ואני נוכל לראות את הברכה הזו.</span>
+                  </label>
+                </div>
+              )}
 
               <button 
                 type="submit" 
                 disabled={isSubmitting}
                 className="w-full bg-primary text-white py-4 rounded-xl font-bold tracking-wide hover:bg-primary-light transition-colors shadow-lg shadow-primary/30 disabled:opacity-70 disabled:cursor-not-allowed mb-10"
               >
-                {isSubmitting ? (editingGreetingId ? 'מעדכן...' : 'מעלה...') : (editingGreetingId ? 'שמור שינויים' : 'שליחת הברכה')}
+                {isSubmitting ? (editingGreetingId ? 'מעדכן...' : 'מעלה...') : isJournalUpload ? (editingGreetingId ? 'שמור שינויים' : 'שתף חוויה') : (editingGreetingId ? 'שמור שינויים' : 'שליחת הברכה')}
               </button>
             </form>
           </motion.div>

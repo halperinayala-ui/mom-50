@@ -1,7 +1,7 @@
 import { Plane } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export function BoardingPassScreen() {
+export function BoardingPassScreen({ userName }: { userName: string | null }) {
   return (
     <div className="flex flex-col items-center justify-center p-6 space-y-8 min-h-[70vh]">
       
@@ -57,9 +57,9 @@ export function BoardingPassScreen() {
           <div className="grid grid-cols-2 gap-4 relative z-10 mt-8 pt-4">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">
-                 נוסעת
+                 {userName === 'אבא' ? 'נוסע' : 'נוסעת'}
               </p>
-              <p className="font-bold text-[#4a4843]">אמא</p>
+              <p className="font-bold text-[#4a4843]">{userName === 'אבא' ? 'אבא' : 'אמא'}</p>
             </div>
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">

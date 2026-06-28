@@ -8,12 +8,12 @@ import { toast } from 'react-hot-toast';
 export function JournalScreen({ 
   greetings, 
   currentUser, 
-  isMom,
+  isTraveler,
   onUploadClick
 }: { 
   greetings: Greeting[], 
   currentUser: string | null,
-  isMom: boolean,
+  isTraveler: boolean,
   onUploadClick: () => void
 }) {
   const journalEntries = greetings.filter(g => g.is_journal_entry);
@@ -24,7 +24,7 @@ export function JournalScreen({
       {/* Header & Upload Button for Mom */}
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-heading font-bold text-[#800000]">יומן מסע</h2>
-        {isMom && (
+        {isTraveler && (
           <button 
             onClick={onUploadClick}
             className="bg-[#800000] text-[#FDFBF7] px-4 py-2 rounded-full shadow-md flex items-center gap-2 hover:bg-[#600000] transition-colors"
@@ -137,10 +137,10 @@ function JournalEntryCard({ entry, currentUser }: { entry: Greeting, currentUser
       <div className="p-4 flex items-center justify-between bg-gray-50/50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#800000] to-[#D4AF37] flex items-center justify-center text-white font-bold font-heading shadow-inner">
-            אמא
+            {entry.sender?.substring(0, 3)}
           </div>
           <div>
-            <p className="font-bold text-gray-800">אמא</p>
+            <p className="font-bold text-gray-800">{entry.sender}</p>
             <p className="text-xs text-gray-400">{timeString}</p>
           </div>
         </div>
