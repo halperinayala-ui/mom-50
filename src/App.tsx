@@ -8,6 +8,10 @@ import type { Greeting, GreetingType } from './lib/supabase';
 import { supabase } from './lib/supabase';
 import AudioRecorder from './components/AudioRecorder';
 import { GuestUploadScreen } from './components/GuestUploadScreen';
+import { BoardingPassScreen } from './components/BoardingPassScreen';
+import { JournalScreen } from './components/JournalScreen';
+import { BottomNav } from './components/BottomNav';
+import type { ActiveScreen } from './components/BottomNav';
 
 // --- Types ---
 type AppGreeting = Greeting & { isOpened?: boolean; isRead?: boolean };
@@ -264,6 +268,8 @@ export default function App() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [editingGreetingId, setEditingGreetingId] = useState<string | null>(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState<string | null>(null);
+  const [isJournalUpload, setIsJournalUpload] = useState(false);
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('boarding');
   
   const [senderInput, setSenderInput] = useState('');
   const [type, setType] = useState<GreetingType>('text');
@@ -552,19 +558,17 @@ export default function App() {
         if (updateError) throw updateError;
         toast.success('הברכה עודכנה בהצלחה!', { id: toastId });
       } else {
-        // Insert new greeting
-        const { error: insertError } = await supabase
-          .from('greetings')
-          .insert([
-            {
-              sender: senderInput.trim(),
-              type,
-              content,
-              media_url,
-              is_private: isPrivate,
-              uploaded_by: userName
-            }
-          ]);
+        // Submit to Supabase
+        const { error: insertError } = await supabase.from('greetings').insert({
+          sender: senderInput.trim(),
+          type,
+          content: content.trim(),
+          media_url: media_url,
+          is_private: isPrivate,
+          uploaded_by: userName,
+          is_approved: isSuperAdmin ? true : false,
+          is_journal_entry: isJournalUpload
+        });
 
         if (insertError) throw insertError;
         toast.success('הברכה עלתה בהצלחה!', { id: toastId });
@@ -714,6 +718,7 @@ export default function App() {
     setIsPrivate(false);
     setEditingGreetingId(null);
     setExistingMediaUrl(null);
+    setIsJournalUpload(false);
   }
 
   // Subscribe to push notifications
@@ -975,60 +980,78 @@ export default function App() {
         />
       </header>
 
-      <main className="relative z-10 flex-1 overflow-y-auto p-5 space-y-8 pb-32">
-        {loading ? (
-          <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
-        ) : greetings.filter(g => isSuperAdmin || (g.is_approved !== false)).length === 0 ? (
-          <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
-        ) : (
-          <AnimatePresence>
-            {greetings.filter(g => isSuperAdmin || (g.is_approved !== false)).map((greeting) => (
-              <GreetingCard 
-                key={greeting.id} 
-                greeting={greeting} 
-                onOpen={() => handleOpen(greeting.id)} 
-                currentUser={userName} 
-                isAdmin={isAdmin}
-                isSuperAdmin={isSuperAdmin}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-                onHeart={handleHeart}
-                onClose={() => handleClose(greeting.id)}
-                onApprove={handleApprove}
-              />
-            ))}
-          </AnimatePresence>
+      <main className="relative z-10 flex-1 overflow-y-auto pb-24">
+        {activeScreen === 'boarding' && <BoardingPassScreen />}
+        
+        {activeScreen === 'journal' && (
+          <JournalScreen 
+            greetings={greetings} 
+            currentUser={userName} 
+            isMom={userName === 'אמא'} 
+            onUploadClick={() => {
+              setIsJournalUpload(true);
+              setShowUploadModal(true);
+            }} 
+          />
         )}
 
-        <div className="text-center pt-8 pb-32 flex flex-col items-center">
-          <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent mb-6"></div>
-          <p className="text-sm text-[#a09e99] tracking-widest uppercase font-light mb-6">עוד הפתעות בדרך...</p>
-          
-          <button
-            onClick={async () => {
-              const shareData = {
-                title: 'חוגגים 50 לאמא!',
-                text: 'הצטרפו אליי לאחל מזל טוב לאמא!',
-                url: 'https://mom-50.vercel.app'
-              };
-              try {
-                if (navigator.share) {
-                  await navigator.share(shareData);
-                } else {
-                  await navigator.clipboard.writeText('https://mom-50.vercel.app');
-                  toast.success('הקישור הועתק, אפשר לשלוח בוואצפ!');
-                }
-              } catch (err) {
-                // user cancelled share
-              }
-            }}
-            className="flex items-center justify-center gap-2 text-[#800000] font-bold bg-[#D4AF37]/10 py-3 px-6 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-colors shadow-sm"
-          >
-            <Share2 className="w-5 h-5" />
-            <span>שיתוף האפליקציה</span>
-          </button>
-        </div>
+        {activeScreen === 'greetings' && (
+          <div className="p-5 space-y-8">
+            {loading ? (
+              <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
+            ) : greetings.filter(g => !g.is_journal_entry && (isSuperAdmin || (g.is_approved !== false))).length === 0 ? (
+              <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
+            ) : (
+              <AnimatePresence>
+                {greetings.filter(g => !g.is_journal_entry && (isSuperAdmin || (g.is_approved !== false))).map((greeting) => (
+                  <GreetingCard 
+                    key={greeting.id} 
+                    greeting={greeting} 
+                    onOpen={() => handleOpen(greeting.id)} 
+                    currentUser={userName || ''} 
+                    isAdmin={isAdmin}
+                    isSuperAdmin={isSuperAdmin}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                    onHeart={handleHeart}
+                    onClose={() => handleClose(greeting.id)}
+                    onApprove={handleApprove}
+                  />
+                ))}
+              </AnimatePresence>
+            )}
+
+            <div className="text-center pt-8 pb-10 flex flex-col items-center">
+              <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent mb-6"></div>
+              <p className="text-sm text-[#a09e99] tracking-widest uppercase font-light mb-6">עוד הפתעות בדרך...</p>
+              
+              <button
+                onClick={async () => {
+                  const shareData = {
+                    title: 'חוגגים 50 לאמא!',
+                    text: 'הצטרפו אליי לאחל מזל טוב לאמא!',
+                    url: 'https://mom-50.vercel.app'
+                  };
+                  try {
+                    if (navigator.share) {
+                      await navigator.share(shareData);
+                    } else {
+                      await navigator.clipboard.writeText('https://mom-50.vercel.app');
+                      toast.success('הקישור הועתק, אפשר לשלוח בוואצפ!');
+                    }
+                  } catch (err) {}
+                }}
+                className="flex items-center justify-center gap-2 text-[#800000] font-bold bg-[#D4AF37]/10 py-3 px-6 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-colors shadow-sm"
+              >
+                <Share2 className="w-5 h-5" />
+                <span>שיתוף האפליקציה</span>
+              </button>
+            </div>
+          </div>
+        )}
       </main>
+      
+      <BottomNav activeScreen={activeScreen} onChange={setActiveScreen} />
       
       {/* PWA Install Banner */}
       {showInstallBanner && (deferredPrompt || isIOS) && (

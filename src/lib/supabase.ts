@@ -24,4 +24,13 @@ export interface Greeting {
   liked_by_mom?: boolean;
   is_approved?: boolean;
   read_by?: string[];
+  is_journal_entry?: boolean;
+}
+
+export interface Comment {
+  id: string;
+  greeting_id: string;
+  author: string;
+  content: string;
+  created_at: string;
 }
