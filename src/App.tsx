@@ -318,9 +318,11 @@ export default function App() {
     if (error) {
       console.error('Error fetching greetings:', error);
     } else if (data) {
-      const savedRead = localStorage.getItem('birthday_read_greetings');
-      const readIds = savedRead ? JSON.parse(savedRead) : [];
-      setGreetings(data.map(g => ({ ...g, isOpened: false, isRead: readIds.includes(g.id) })));
+      setGreetings(data.map(g => ({ 
+        ...g, 
+        isOpened: false, 
+        isRead: g.read_by && userName ? g.read_by.includes(userName) : false 
+      })));
     }
     setLoading(false);
   }, [userName]);
@@ -441,18 +443,29 @@ export default function App() {
     };
   }, [userName, fetchGreetings]);
 
-  const handleOpen = (id: string) => {
+  const handleOpen = async (id: string) => {
+    const greeting = greetings.find(g => g.id === id);
+    if (!greeting) return;
+
     setGreetings(prev => prev.map(g => g.id === id ? { ...g, isOpened: true, isRead: true } : g));
     
-    try {
-      const saved = localStorage.getItem('birthday_read_greetings');
-      const readIds: string[] = saved ? JSON.parse(saved) : [];
-      if (!readIds.includes(id)) {
-        readIds.push(id);
-        localStorage.setItem('birthday_read_greetings', JSON.stringify(readIds));
+    if (userName) {
+      const currentReadBy = greeting.read_by || [];
+      if (!currentReadBy.includes(userName)) {
+        const newReadBy = [...currentReadBy, userName];
+        
+        // Optimistically update local array so future clicks don't re-trigger
+        greeting.read_by = newReadBy;
+
+        const { error } = await supabase
+          .from('greetings')
+          .update({ read_by: newReadBy })
+          .eq('id', id);
+          
+        if (error) {
+          console.error("Couldn't save read status to DB", error);
+        }
       }
-    } catch (e) {
-      console.error('Error saving read status', e);
     }
   };
 

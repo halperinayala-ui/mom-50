@@ -23,4 +23,5 @@ export interface Greeting {
   uploaded_by?: string;
   liked_by_mom?: boolean;
   is_approved?: boolean;
+  read_by?: string[];
 }
