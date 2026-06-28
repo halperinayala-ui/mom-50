@@ -250,15 +250,14 @@ function JournalEntryCard({
           <button 
             className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
             onClick={async () => {
-              toast.dismiss(t.id);
-              setTimeout(async () => {
-                const { error } = await supabase.from('comments').delete().eq('id', id);
-                if (error) {
-                  toast.error('שגיאה במחיקת התגובה');
-                } else {
-                  fetchComments();
-                }
-              }, 100);
+              toast.loading('מוחק...', { id: t.id });
+              const { error } = await supabase.from('comments').delete().eq('id', id);
+              if (error) {
+                toast.error('שגיאה במחיקת התגובה', { id: t.id, duration: 3000 });
+              } else {
+                toast.success('התגובה נמחקה', { id: t.id, duration: 3000 });
+                fetchComments();
+              }
             }}
           >
             כן, למחוק

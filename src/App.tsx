@@ -620,7 +620,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
           .eq('id', editingGreetingId);
 
         if (updateError) throw updateError;
-        toast.success('הברכה עודכנה בהצלחה!', { id: toastId });
+        toast.success(isJournalUpload ? 'החוויה עודכנה בהצלחה!' : 'הברכה עודכנה בהצלחה!', { id: toastId });
       } else {
         // Submit to Supabase
         const { error: insertError } = await supabase.from('greetings').insert({
@@ -746,16 +746,14 @@ localStorage.setItem('birthday_is_superadmin', 'false');
           <button 
             className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
             onClick={async () => {
-              toast.dismiss(t.id);
-              setTimeout(async () => {
-                const { error } = await supabase.from('greetings').delete().eq('id', id);
-                if (error) {
-                  toast.error('שגיאה במחיקה');
-                } else {
-                  toast.success(`ה${itemType} נמחקה`, { duration: 3000 });
-                  fetchGreetings();
-                }
-              }, 100);
+              toast.loading('מוחק...', { id: t.id }); // morph to loading to prevent double clicks
+              const { error } = await supabase.from('greetings').delete().eq('id', id);
+              if (error) {
+                toast.error('שגיאה במחיקה', { id: t.id, duration: 3000 });
+              } else {
+                toast.success(`ה${itemType} נמחקה`, { id: t.id, duration: 3000 });
+                fetchGreetings();
+              }
             }}
           >
             כן, למחוק
