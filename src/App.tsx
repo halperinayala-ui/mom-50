@@ -751,7 +751,8 @@ localStorage.setItem('birthday_is_superadmin', 'false');
   };
 
   const handleEdit = (greeting: AppGreeting) => {
-    if (!isAdmin) return;
+    const isTraveler = userName === 'אמא' || userName === 'אבא';
+    if (!isAdmin && !isTraveler) return;
     setEditingGreetingId(greeting.id);
     setSenderInput(greeting.sender);
     setType(greeting.type);

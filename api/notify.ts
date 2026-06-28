@@ -43,7 +43,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
 
-    const sendPromises = subscriptions.map(async (sub) => {
+    const sendPromises = subscriptions
+      .filter(sub => sub.user_name !== sender)
+      .map(async (sub) => {
       const pushSubscription = {
         endpoint: sub.endpoint,
         keys: {
