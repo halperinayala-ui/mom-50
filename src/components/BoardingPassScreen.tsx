@@ -82,10 +82,9 @@ export function BoardingPassScreen({ userName }: { userName: string | null }) {
           </div>
         </div>
 
-        {/* Bottom Section - Barcode */}
-        <div className="bg-[#fcfaf5] p-6 text-center border-t border-gray-100 flex flex-col items-center">
-          <p className="text-xs text-[#D4AF37] font-bold tracking-widest uppercase mb-3">Happy Birthday</p>
-          <div className="w-full h-16 opacity-60 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPgo8cGF0aCBkPSJNMCAwaDJ2MTAwSDB6IE01IDBoMXYxMDBINXogTTEwIDBoM3YxMDBIMTB6IE0xNiAwaDV2MTAwSDE2eiBNMjQgMGgydjEwMEgyNHogTTI4IDBoNHYxMDBIMjh6IE0zNCAwaDF2MTAwSDM0eiBNMzggMGgzdjEwMEgzOHogTTQ0IDBoNnYxMDBINDR6IE01MiAwaDF2MTAwSDUyeiBNNTYgMGgzdjEwMEg1NnogTTYyIDBoNHYxMDBINjJ6IE02OCAwaDJ2MTAwSDY4eiBNNzIgMGgzdjEwMEg3MnoiIGZpbGw9IiMzMzMiLz4KPC9zdmc+')] bg-repeat-x bg-contain"></div>
+        {/* Bottom Section */}
+        <div className="bg-[#fcfaf5] p-6 text-center border-t border-gray-100 flex flex-col items-center rounded-b-3xl">
+          <p className="text-sm text-[#D4AF37] font-bold tracking-widest uppercase">Happy 50th Birthday</p>
         </div>
       </motion.div>
 
