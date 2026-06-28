@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Upload, Sparkles, AlertCircle, Mic } from 'lucide-react';
+import { Send, Upload, Sparkles, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
