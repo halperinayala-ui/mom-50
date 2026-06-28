@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Gift, Video, Image as ImageIcon, Send, Lock, Mic, FileText, Calendar, X, Trash2, Edit2, Bell } from 'lucide-react';
+import { Gift, Video, Image as ImageIcon, Send, Lock, Mic, FileText, Calendar, X, Trash2, Edit2, Bell, Heart } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,9 +13,9 @@ type AppGreeting = Greeting & { isOpened?: boolean };
 
 // --- Components ---
 
-function LockedGreetingCard({ greeting, currentUser, onDelete }: { greeting: Greeting, currentUser: string, onDelete: (id: string) => void }) {
+function LockedGreetingCard({ greeting, currentUser, isAdmin, onDelete }: { greeting: AppGreeting, currentUser: string, isAdmin: boolean, onDelete: (id: string) => void }) {
   const timeString = new Date(greeting.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-  const canEdit = greeting.uploaded_by === currentUser || (!greeting.uploaded_by && greeting.sender === currentUser);
+  const canEdit = isAdmin && (greeting.uploaded_by === currentUser || (!greeting.uploaded_by && greeting.sender === currentUser));
 
   return (
     <motion.article 
@@ -52,25 +53,29 @@ function LockedGreetingCard({ greeting, currentUser, onDelete }: { greeting: Gre
 function GreetingCard({ 
   greeting, 
   onOpen, 
-  currentUser, 
+  currentUser,
+  isAdmin, 
   onDelete, 
-  onEdit 
+  onEdit,
+  onHeart
 }: { 
   greeting: AppGreeting, 
   onOpen: () => void, 
   currentUser: string,
+  isAdmin: boolean,
   onDelete: (id: string) => void,
-  onEdit: (greeting: AppGreeting) => void
+  onEdit: (greeting: AppGreeting) => void,
+  onHeart: (id: string) => void
 }) {
   // Privacy check
   const isMom = currentUser === 'אמא';
   const isSender = greeting.sender === currentUser;
   const isUploader = greeting.uploaded_by === currentUser;
   const canView = !greeting.is_private || isMom || isSender || isUploader;
-  const canEdit = isUploader || (!greeting.uploaded_by && isSender);
+  const canEdit = isAdmin && (isUploader || (!greeting.uploaded_by && isSender));
 
   if (!canView) {
-    return <LockedGreetingCard greeting={greeting} currentUser={currentUser} onDelete={onDelete} />;
+    return <LockedGreetingCard greeting={greeting} currentUser={currentUser} isAdmin={isAdmin} onDelete={onDelete} />;
   }
 
   if (!greeting.isOpened) {
@@ -170,6 +175,23 @@ function GreetingCard({
       <p className="text-[#4a4843] leading-relaxed text-[17px] font-light whitespace-pre-wrap">
         {greeting.content}
       </p>
+
+      {/* Heart interaction for Mom */}
+      <div className="mt-4 flex justify-end">
+        {isMom ? (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onHeart(greeting.id); }}
+            className="flex items-center gap-1 text-[#D4AF37] hover:scale-110 transition-transform"
+          >
+            {greeting.liked_by_mom ? <Heart className="w-6 h-6 fill-[#D4AF37]" /> : <Heart className="w-6 h-6" />}
+          </button>
+        ) : greeting.liked_by_mom ? (
+          <div className="flex items-center gap-1 text-[#D4AF37]">
+            <Heart className="w-5 h-5 fill-[#D4AF37]" />
+            <span className="text-xs">אמא אהבה</span>
+          </div>
+        ) : null}
+      </div>
     </motion.article>
   );
 }
@@ -194,8 +216,6 @@ export default function App() {
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | Blob | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // PWA Install State
@@ -225,9 +245,7 @@ export default function App() {
     if (error) {
       console.error('Error fetching greetings:', error);
     } else if (data) {
-      const now = new Date();
-      const visibleGreetings = data.filter(g => !g.scheduled_for || new Date(g.scheduled_for) <= now);
-      setGreetings(prev => visibleGreetings.map(g => {
+      setGreetings(prev => data.map(g => {
         const existing = prev.find(p => p.id === g.id);
         return { ...g, isOpened: existing?.isOpened || false };
       }));
@@ -305,10 +323,7 @@ export default function App() {
       .channel('public:greetings')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'greetings' }, payload => {
          const newGreeting = payload.new as Greeting;
-         const now = new Date();
-         if (!newGreeting.scheduled_for || new Date(newGreeting.scheduled_for) <= now) {
-            setGreetings(prev => [{ ...newGreeting, isOpened: false }, ...prev]);
-         }
+         setGreetings(prev => [{ ...newGreeting, isOpened: false }, ...prev]);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'greetings' }, payload => {
          const updated = payload.new as Greeting;
@@ -386,11 +401,6 @@ export default function App() {
         }
       }
 
-      let scheduled_for = null;
-      if (scheduledDate && scheduledTime) {
-         scheduled_for = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
-      }
-
       if (editingGreetingId) {
         // Update existing greeting
         const { error: updateError } = await supabase
@@ -400,7 +410,6 @@ export default function App() {
             type,
             content,
             media_url,
-            scheduled_for,
             is_private: isPrivate
           })
           .eq('id', editingGreetingId);
@@ -417,7 +426,6 @@ export default function App() {
               type,
               content,
               media_url,
-              scheduled_for,
               is_private: isPrivate,
               uploaded_by: userName
             }
@@ -442,8 +450,6 @@ export default function App() {
       setContent('');
       setFile(null);
       setIsPrivate(false);
-      setScheduledDate('');
-      setScheduledTime('');
       setEditingGreetingId(null);
       setExistingMediaUrl(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -454,6 +460,32 @@ export default function App() {
       toast.error(`שגיאה: ${error.message || 'לא הצלחנו להעלות'}`, { id: toastId });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleHeart = async (id: string) => {
+    if (userName !== 'אמא') return;
+    
+    // Confetti
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#D4AF37', '#FFD700', '#FDFBF7', '#800000']
+    });
+
+    try {
+      const { error } = await supabase
+        .from('greetings')
+        .update({ liked_by_mom: true })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      // Update local state immediately
+      setGreetings(prev => prev.map(g => g.id === id ? { ...g, liked_by_mom: true } : g));
+    } catch (error) {
+      console.error('Failed to like greeting:', error);
     }
   };
 
@@ -479,15 +511,6 @@ export default function App() {
     setIsPrivate(greeting.is_private);
     setExistingMediaUrl(greeting.media_url || null);
     
-    if (greeting.scheduled_for) {
-      const d = new Date(greeting.scheduled_for);
-      setScheduledDate(d.toISOString().split('T')[0]);
-      setScheduledTime(d.toTimeString().slice(0,5));
-    } else {
-      setScheduledDate('');
-      setScheduledTime('');
-    }
-    
     setShowUploadModal(true);
   };
 
@@ -497,8 +520,6 @@ export default function App() {
     setContent('');
     setFile(null);
     setIsPrivate(false);
-    setScheduledDate('');
-    setScheduledTime('');
     setEditingGreetingId(null);
     setExistingMediaUrl(null);
   }
@@ -632,8 +653,10 @@ export default function App() {
                 greeting={greeting} 
                 onOpen={() => handleOpen(greeting.id)} 
                 currentUser={userName} 
+                isAdmin={isAdmin}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
+                onHeart={handleHeart}
               />
             ))}
           </AnimatePresence>
@@ -800,31 +823,6 @@ export default function App() {
                   <span className="font-bold flex items-center gap-1"><Lock className="w-3 h-3" /> ברכה אישית</span>
                   <span className="text-xs text-gray-500">רק אמא ואני נוכל לראות את הברכה הזו.</span>
                 </label>
-              </div>
-
-              <div className="p-4 bg-yellow-50/50 rounded-xl border border-yellow-100">
-                <label className="block text-sm font-medium text-gray-800 mb-3 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-yellow-600" />
-                  תזמון עתידי (אופציונלי)
-                </label>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                     <input 
-                       type="date" 
-                       value={scheduledDate}
-                       onChange={e => setScheduledDate(e.target.value)}
-                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
-                     />
-                  </div>
-                  <div className="flex-1">
-                     <input 
-                       type="time" 
-                       value={scheduledTime}
-                       onChange={e => setScheduledTime(e.target.value)}
-                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
-                     />
-                  </div>
-                </div>
               </div>
 
               <button 

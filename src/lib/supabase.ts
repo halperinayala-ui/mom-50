@@ -21,4 +21,5 @@ export interface Greeting {
   scheduled_for?: string | null;
   is_private: boolean;
   uploaded_by?: string;
+  liked_by_mom?: boolean;
 }
