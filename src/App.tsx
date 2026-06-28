@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Gift, Video, Image as ImageIcon, Send, Lock, Mic, FileText, Calendar, X, Trash2, Edit2, Bell, Heart } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Gift, Video, Image as ImageIcon, Send, Lock, Mic, FileText, X, Trash2, Edit2, Bell, Heart } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
@@ -199,6 +199,7 @@ function GreetingCard({
 // --- Main App ---
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -224,6 +225,12 @@ export default function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(true);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Splash screen timer
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Check for saved name on load
   useEffect(() => {
@@ -578,6 +585,27 @@ export default function App() {
       toast.error('שגיאה בהרשמה להתראות');
     }
   };
+
+  if (showSplash) {
+    return (
+      <AnimatePresence>
+        <motion.div 
+          key="splash"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="fixed inset-0 z-[100] bg-[#FDFBF7] flex items-center justify-center"
+        >
+          <img 
+            src="/splash.png" 
+            alt="Splash Screen" 
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
 
   // 1. Name Prompt Screen
   if (!userName) {
