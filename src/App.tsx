@@ -634,6 +634,26 @@ export default function App() {
       }
 
       toast.success('הירשמות להתראות בוצעה בהצלחה!');
+
+      // --- CREATIVE DIAGNOSTIC TEST ---
+      toast.loading('מבצע בדיקת פוש...', { id: 'push-test' });
+      try {
+        const testRes = await fetch('/api/test-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription })
+        });
+        const testData = await testRes.json();
+        
+        if (testRes.ok) {
+          toast.success('הפוש נשלח לטלפון שלך עכשיו! בדקי אם קפץ', { id: 'push-test', duration: 8000 });
+        } else {
+          toast.error(`שגיאה בשרת גוגל: ${testData.error} (קוד ${testData.statusCode})`, { id: 'push-test', duration: 10000 });
+        }
+      } catch (e: any) {
+        toast.error('שגיאה בתקשורת עם שרת Vercel', { id: 'push-test' });
+      }
+
     } catch (error: any) {
       console.error('Subscription error:', error);
       toast.error(`שגיאה בהרשמה: ${error.message || 'לא ידוע'}`);
