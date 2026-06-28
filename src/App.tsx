@@ -259,9 +259,10 @@ export default function App() {
     if (error) {
       console.error('Error fetching greetings:', error);
     } else if (data) {
+      const savedOpened = JSON.parse(localStorage.getItem('opened_greetings') || '[]');
       setGreetings(prev => data.map(g => {
         const existing = prev.find(p => p.id === g.id);
-        return { ...g, isOpened: existing?.isOpened || false };
+        return { ...g, isOpened: existing?.isOpened || savedOpened.includes(g.id) || false };
       }));
     }
     setLoading(false);
@@ -366,7 +367,12 @@ export default function App() {
   }, [userName, fetchGreetings]);
 
   const handleOpen = (id: string) => {
-    setGreetings(prev => prev.map(g => g.id === id ? { ...g, isOpened: true } : g));
+    setGreetings(prev => {
+      const next = prev.map(g => g.id === id ? { ...g, isOpened: true } : g);
+      const openedIds = next.filter(g => g.isOpened).map(g => g.id);
+      localStorage.setItem('opened_greetings', JSON.stringify(openedIds));
+      return next;
+    });
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -738,7 +744,7 @@ export default function App() {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
       </div>
       
-      <header className="relative z-10 pt-10 pb-6 px-6 flex flex-col items-center sticky top-0 bg-[#FDFBF7]/90 backdrop-blur-xl border-b border-[#D4AF37]/20">
+      <header className="relative z-10 pt-10 pb-6 px-6 flex flex-col items-center bg-[#FDFBF7] border-b border-[#D4AF37]/20">
         <div className="absolute top-4 right-4 flex gap-3 items-center">
            <button onClick={subscribeToPush} className="p-2 bg-gray-50 text-gray-500 rounded-full hover:bg-primary/10 hover:text-primary transition-colors shadow-sm" title="קבל התראות">
               <Bell className="w-4 h-4" />
@@ -761,7 +767,12 @@ export default function App() {
           <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
         ) : (
           <AnimatePresence>
-            {greetings.map((greeting) => (
+            {greetings.filter(g => {
+              if (g.is_private) {
+                return isAdmin || userName === 'אמא' || g.uploaded_by === userName;
+              }
+              return true;
+            }).map((greeting) => (
               <GreetingCard 
                 key={greeting.id} 
                 greeting={greeting} 
