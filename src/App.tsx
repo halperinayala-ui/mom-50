@@ -318,19 +318,9 @@ export default function App() {
     if (error) {
       console.error('Error fetching greetings:', error);
     } else if (data) {
-      if (userName) {
-        setIsAdmin(localStorage.getItem('birthday_is_admin') === 'true');
-      }
-      
-      const savedRead = JSON.parse(localStorage.getItem('opened_greetings') || '[]');
-      setGreetings(prev => data.map(g => {
-        const existing = prev.find(p => p.id === g.id);
-        return { 
-          ...g, 
-          isRead: existing?.isRead || savedRead.includes(g.id) || false,
-          isOpened: existing?.isOpened || false
-        };
-      }));
+      const savedRead = localStorage.getItem('birthday_read_greetings');
+      const readIds = savedRead ? JSON.parse(savedRead) : [];
+      setGreetings(data.map(g => ({ ...g, isOpened: false, isRead: readIds.includes(g.id) })));
     }
     setLoading(false);
   }, [userName]);
@@ -452,12 +442,18 @@ export default function App() {
   }, [userName, fetchGreetings]);
 
   const handleOpen = (id: string) => {
-    setGreetings(prev => {
-      const next = prev.map(g => g.id === id ? { ...g, isOpened: true, isRead: true } : g);
-      const readIds = next.filter(g => g.isRead).map(g => g.id);
-      localStorage.setItem('opened_greetings', JSON.stringify(readIds));
-      return next;
-    });
+    setGreetings(prev => prev.map(g => g.id === id ? { ...g, isOpened: true, isRead: true } : g));
+    
+    try {
+      const saved = localStorage.getItem('birthday_read_greetings');
+      const readIds: string[] = saved ? JSON.parse(saved) : [];
+      if (!readIds.includes(id)) {
+        readIds.push(id);
+        localStorage.setItem('birthday_read_greetings', JSON.stringify(readIds));
+      }
+    } catch (e) {
+      console.error('Error saving read status', e);
+    }
   };
 
   const handleClose = (id: string) => {
