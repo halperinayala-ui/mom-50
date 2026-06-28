@@ -1083,7 +1083,7 @@ export default function App() {
       )}
 
       {/* Upload Button (Only for Admins) */}
-      {isAdmin && userName !== 'אמא' && !showUploadModal && (
+      {isAdmin && userName !== 'אמא' && !showUploadModal && activeScreen === 'greetings' && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
            <button 
              onClick={() => { resetForm(); setShowUploadModal(true); }}

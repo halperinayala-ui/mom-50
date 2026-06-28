@@ -96,7 +96,6 @@ export function BoardingPassScreen() {
         className="text-center px-8"
       >
         <p className="text-[#800000] font-bold text-xl font-heading mb-2">טיסה נעימה ומסע מרומם!</p>
-        <p className="text-[#4a4843] text-sm font-light">האפליקציה הזו תלווה אתכם לאורך כל המסע לניו יורק ולרבי.</p>
       </motion.div>
 
     </div>

@@ -23,7 +23,7 @@ export function JournalScreen({
       
       {/* Header & Upload Button for Mom */}
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-heading font-bold text-[#800000]">יומן מסע ניו יורק</h2>
+        <h2 className="text-2xl font-heading font-bold text-[#800000]">יומן מסע</h2>
         {isMom && (
           <button 
             onClick={onUploadClick}
