@@ -563,7 +563,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading(editingGreetingId ? 'מעדכן ברכה...' : 'מעלה ברכה...');
+    const toastId = toast.loading(isJournalUpload ? (editingGreetingId ? 'מעדכן חוויה...' : 'מעלה חוויה...') : (editingGreetingId ? 'מעדכן ברכה...' : 'מעלה ברכה...'));
 
     try {
       let media_url = existingMediaUrl; // Keep old media URL by default
@@ -1277,12 +1277,51 @@ localStorage.setItem('birthday_is_superadmin', 'false');
                         {isJournalUpload && files.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-4">
                             {files.map((f: File, i: number) => (
-                              <div key={i} className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200 shadow-sm">
+                              <div key={i} className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200 shadow-sm group">
                                 {f.type.startsWith('image/') ? (
                                   <img src={URL.createObjectURL(f)} alt={`preview-${i}`} className="w-full h-full object-cover" />
                                 ) : (
                                   <span className="text-xs text-gray-500 font-bold bg-gray-200 w-full h-full flex items-center justify-center">וידאו</span>
                                 )}
+                                <button 
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newFiles = [...files];
+                                    newFiles.splice(i, 1);
+                                    setFiles(newFiles);
+                                  }}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {isJournalUpload && existingMediaAttachments.length > 0 && files.length === 0 && (
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {existingMediaAttachments.map((att, i) => (
+                              <div key={i} className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200 shadow-sm group">
+                                {att.type === 'image' ? (
+                                  <img src={att.url} alt={`preview-old-${i}`} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-xs text-gray-500 font-bold bg-gray-200 w-full h-full flex items-center justify-center">וידאו</span>
+                                )}
+                                <button 
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newAttachments = [...existingMediaAttachments];
+                                    newAttachments.splice(i, 1);
+                                    setExistingMediaAttachments(newAttachments);
+                                    // if empty, we might need to clear url too
+                                    if (newAttachments.length === 0) setExistingMediaUrl(null);
+                                  }}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
                               </div>
                             ))}
                           </div>

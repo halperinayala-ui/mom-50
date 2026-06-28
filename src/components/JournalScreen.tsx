@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Send, Camera } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import type { Greeting, Comment } from '../lib/supabase';
-import { toast } from 'react-hot-toast';
+import { HDate } from '@hebcal/core';
 
 function MediaGallery({ attachments, fallbackUrl, fallbackType }: { 
   attachments?: { url: string, type: 'image' | 'video' }[], 
@@ -11,6 +12,31 @@ function MediaGallery({ attachments, fallbackUrl, fallbackType }: {
   fallbackType: 'image' | 'video' | 'audio' | 'text' 
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // the required distance between touchStart and touchEnd to be detected as a swipe
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe) {
+      nextSlide();
+    }
+    if (isRightSwipe) {
+      prevSlide();
+    }
+  }
 
   let items: { url: string, type: 'image' | 'video' }[] = [];
   if (attachments && attachments.length > 0) {
@@ -25,7 +51,12 @@ function MediaGallery({ attachments, fallbackUrl, fallbackType }: {
   const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
 
   return (
-    <div className="relative w-full bg-black/5 flex items-center justify-center group overflow-hidden">
+    <div 
+      className="relative w-full bg-black/5 flex items-center justify-center group overflow-hidden"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       {items[currentIndex].type === 'video' ? (
         <video src={items[currentIndex].url} controls className="max-h-[70vh] w-full object-contain" />
       ) : (
@@ -132,12 +163,10 @@ function JournalEntryCard({
   const [editCommentText, setEditCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const timeString = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(new Date(entry.created_at));
+  const dateObj = new Date(entry.created_at);
+  const hebrewDateStr = new HDate(dateObj).renderGematriya(true); // e.g. "י״ג בתמוז"
+  const timeStr = dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  const timeString = `${hebrewDateStr} | ${timeStr}`;
 
   useEffect(() => {
     fetchComments();
