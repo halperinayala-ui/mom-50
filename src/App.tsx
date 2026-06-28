@@ -631,7 +631,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
           media_attachments: media_attachments,
           is_private: isPrivate,
           uploaded_by: userName,
-          is_approved: isSuperAdmin ? true : false,
+          is_approved: true,
           is_journal_entry: isJournalUpload
         });
 
