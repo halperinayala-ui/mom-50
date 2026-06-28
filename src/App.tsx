@@ -591,9 +591,9 @@ export default function App() {
       }
 
       toast.success('הירשמות להתראות בוצעה בהצלחה!');
-    } catch (error) {
-      console.error(error);
-      toast.error('שגיאה בהרשמה להתראות');
+    } catch (error: any) {
+      console.error('Subscription error:', error);
+      toast.error(`שגיאה בהרשמה: ${error.message || 'לא ידוע'}`);
     }
   };
 
@@ -702,7 +702,7 @@ export default function App() {
               onClick={() => setShowMomWelcome(false)}
               className="bg-gradient-to-r from-[#800000] to-[#5a0000] text-white px-10 py-4 rounded-full font-bold text-xl shadow-[0_10px_20px_rgba(128,0,0,0.2)] hover:scale-105 transition-transform"
             >
-              היכנסי למתנה
+              כניסה
             </button>
           </motion.div>
         </motion.div>
