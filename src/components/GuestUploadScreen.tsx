@@ -131,7 +131,7 @@ export function GuestUploadScreen({ guestName }: GuestUploadScreenProps) {
       
       <div className="relative z-10 max-w-md w-full mx-auto">
         <header className="text-center py-8">
-          <img src="/logo.png" alt="Logo" className="w-32 mx-auto mb-4" />
+          <img src="/icon-512.png" alt="Logo" className="w-32 mx-auto mb-4 rounded-3xl shadow-sm border border-[#D4AF37]/20" />
           <h1 className="text-2xl font-heading font-bold text-primary">הוזמנת לברך את אמא! ❤️</h1>
           <p className="text-gray-600 mt-2">כל ברכה שלכם הופכת את היום הזה למיוחד יותר.</p>
         </header>
