@@ -829,15 +829,13 @@ localStorage.setItem('birthday_is_superadmin', 'false');
         outputArray[i] = rawData.charCodeAt(i);
       }
 
-      const existingSubscription = await registration.pushManager.getSubscription();
-      if (existingSubscription) {
-        await existingSubscription.unsubscribe();
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: outputArray
+        });
       }
-
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: outputArray
-      });
 
       const subData = JSON.parse(JSON.stringify(subscription));
 
