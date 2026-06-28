@@ -735,9 +735,13 @@ localStorage.setItem('birthday_is_superadmin', 'false');
   };
 
   const handleDelete = async (id: string) => {
+    const greeting = greetings.find(g => g.id === id);
+    const isJournal = greeting?.is_journal_entry;
+    const itemType = isJournal ? 'חוויה' : 'ברכה';
+
     toast((t) => (
       <div className="flex flex-col gap-4 text-center">
-        <p className="font-semibold">האם את בטוחה שברצונך למחוק ברכה זו?</p>
+        <p className="font-semibold">האם את בטוחה שברצונך למחוק {isJournal ? 'חוויה זו' : 'ברכה זו'}?</p>
         <div className="flex gap-2 justify-center">
           <button 
             className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
@@ -746,9 +750,9 @@ localStorage.setItem('birthday_is_superadmin', 'false');
               setTimeout(async () => {
                 const { error } = await supabase.from('greetings').delete().eq('id', id);
                 if (error) {
-                  toast.error('שגיאה במחיקה', { id: 'del-error', duration: 3000 });
+                  toast.error('שגיאה במחיקה');
                 } else {
-                  toast.success('הברכה נמחקה', { id: 'del-success', duration: 3000 });
+                  toast.success(`ה${itemType} נמחקה`, { duration: 3000 });
                   fetchGreetings();
                 }
               }, 100);
@@ -764,7 +768,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
           </button>
         </div>
       </div>
-    ), { duration: Infinity });
+    ), { duration: Infinity, id: `del-confirm-${id}` });
   };
 
   const handleEdit = (greeting: AppGreeting) => {
