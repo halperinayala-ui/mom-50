@@ -953,10 +953,17 @@ export default function App() {
       </div>
       
       <header className="relative z-10 pt-10 pb-6 px-6 flex flex-col items-center bg-[#FDFBF7] border-b border-[#D4AF37]/20">
-        <div className="absolute top-4 right-4 flex gap-3 items-center">
-           <button onClick={subscribeToPush} className="p-2 bg-gray-50 text-gray-500 rounded-full hover:bg-primary/10 hover:text-primary transition-colors shadow-sm" title="קבל התראות">
-              <Bell className="w-4 h-4" />
-           </button>
+         <div className="absolute top-4 right-4 flex gap-3 items-center">
+            {notifPermission === 'granted' ? (
+              <div className="p-2 bg-[#D4AF37]/20 text-[#800000] rounded-full shadow-sm flex items-center gap-1.5 px-3 border border-[#D4AF37]/30" title="התראות מופעלות">
+                <Bell className="w-4 h-4 fill-current" />
+                <span className="text-xs font-bold">התראות פעילות</span>
+              </div>
+            ) : (
+              <button onClick={subscribeToPush} className="p-2 bg-gray-50 text-gray-500 rounded-full hover:bg-primary/10 hover:text-primary transition-colors shadow-sm" title="קבל התראות">
+                <Bell className="w-4 h-4" />
+              </button>
+            )}
            <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-primary transition-colors">
               החלף משתמש ({userName})
            </button>
