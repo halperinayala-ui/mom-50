@@ -1147,7 +1147,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
         <motion.div 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
-          className="fixed bottom-0 left-0 right-0 bg-[#FDFBF7] border-t border-[#D4AF37]/30 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-40 flex items-center justify-between"
+          className="fixed bottom-[72px] left-0 right-0 bg-[#FDFBF7] border-t border-[#D4AF37]/30 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-40 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <img src="/icon-192.png" className="w-12 h-12 rounded-xl shadow-md" alt="App Icon" />
