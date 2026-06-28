@@ -604,7 +604,7 @@ export default function App() {
         await fetch('/api/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sender: greeting?.sender || 'אורח', title: 'ברכה חדשה אושרה!' })
+          body: JSON.stringify({ sender: greeting?.sender || 'אורח', title: 'ברכה חדשה!' })
         });
       } catch (e) {
         console.error('Failed to trigger push notification', e);
