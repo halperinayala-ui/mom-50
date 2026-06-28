@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Chocolate Wrapper - VIP 50</title>
+    <!-- Use Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Heebo', sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* A4 Page Container for Print Preview */
+        .page {
+            background: white;
+            width: 21cm;
+            height: 29.7cm;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* The Wrapper Full Size: 20cm wide x 19cm high */
+        .wrapper {
+            width: 20cm;
+            height: 19cm;
+            position: absolute;
+            top: 2cm;
+            left: 0.5cm;
+            border: 1px dashed #ccc; /* Cut line */
+        }
+
+        /* Wrapper Sections */
+        .top-back {
+            height: 4.5cm;
+            background-color: #fcfaf5;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 1cm;
+            box-sizing: border-box;
+        }
+        
+        .fold-top {
+            height: 1cm;
+            background-color: #800000;
+            color: #D4AF37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            letter-spacing: 5px;
+            font-weight: bold;
+        }
+
+        .front {
+            height: 8cm;
+            background-color: white;
+            display: flex;
+            position: relative;
+        }
+
+        .fold-bottom {
+            height: 1cm;
+            background-color: #800000;
+            color: #D4AF37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            letter-spacing: 5px;
+            font-weight: bold;
+        }
+
+        .bottom-back {
+            height: 4.5cm;
+            background-color: #fcfaf5;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 1cm;
+            box-sizing: border-box;
+        }
+
+        /* Front specific layout */
+        .main-pass {
+            width: 16cm;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border-left: 2px dashed #ddd; /* Perforation */
+        }
+
+        .stub {
+            width: 4cm;
+            height: 100%;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5cm;
+            box-sizing: border-box;
+        }
+
+        /* Main Pass Design */
+        .header {
+            background-color: #800000;
+            color: #fdfbf7;
+            padding: 0.5cm 1cm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #D4AF37;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .content {
+            padding: 0.5cm 1cm;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .route {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .city {
+            text-align: center;
+        }
+
+        .city h2 {
+            margin: 0;
+            font-size: 32px;
+            color: #800000;
+            font-weight: 900;
+        }
+        .city p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .plane {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .plane::before {
+            content: '';
+            position: absolute;
+            width: 80%;
+            border-top: 2px dashed #ccc;
+            z-index: 1;
+        }
+        .plane-icon {
+            z-index: 2;
+            background: white;
+            padding: 0 10px;
+            color: #D4AF37;
+            font-size: 24px;
+            transform: rotate(-90deg);
+        }
+
+        .details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5cm;
+        }
+
+        .detail-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-box label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .detail-box span {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Stub Design */
+        .stub-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #800000;
+            text-align: center;
+            margin-bottom: 0.3cm;
+        }
+        .stub-subtitle {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 0.5cm;
+        }
+        #qrcode {
+            width: 2.5cm;
+            height: 2.5cm;
+        }
+        #qrcode img {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Print specifics */
+        @media print {
+            body { background: white; }
+            .page { box-shadow: none; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="wrapper">
+        <!-- Top Flap (Back) -->
+        <div class="top-back">
+            <span style="color: #ccc; font-size: 12px;">מזל טוב לאמא ואבא - הדביקו חלק זה</span>
+        </div>
+        
+        <!-- Top Fold -->
+        <div class="fold-top">HAPPY BIRTHDAY</div>
+
+        <!-- Front Graphic -->
+        <div class="front">
+            <!-- Main Boarding Pass (16cm) -->
+            <div class="main-pass">
+                <div class="header">
+                    <h1>VIP 50 AIRLINES</h1>
+                    <span>✈️</span>
+                </div>
+                <div class="content">
+                    <div class="route">
+                        <div class="city">
+                            <h2>49</h2>
+                            <p>שנות עשייה</p>
+                        </div>
+                        <div class="plane">
+                            <div class="plane-icon">✈️</div>
+                        </div>
+                        <div class="city">
+                            <h2>50</h2>
+                            <p>שנת היובל</p>
+                        </div>
+                    </div>
+                    
+                    <div class="details">
+                        <div class="detail-box">
+                            <label>נוסעים</label>
+                            <span>אמא ואבא</span>
+                        </div>
+                        <div class="detail-box">
+                            <label>מחלקה</label>
+                            <span>ראשונה (VIP)</span>
+                        </div>
+                        <div class="detail-box">
+                            <label>יעד</label>
+                            <span>כה יתן וכה יוסיף</span>
+                        </div>
+                        <div class="detail-box">
+                            <label>מספר טיסה</label>
+                            <span>MAZAL-TOV</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tear-off Stub (4cm) -->
+            <div class="stub">
+                <div class="stub-title">יומן מסע אישי</div>
+                <div class="stub-subtitle">סרקו למסע</div>
+                <div id="qrcode"></div>
+            </div>
+        </div>
+
+        <!-- Bottom Fold -->
+        <div class="fold-bottom">VIP FLIGHT</div>
+
+        <!-- Bottom Flap (Back) -->
+        <div class="bottom-back">
+            <span style="color: #ccc; font-size: 12px;">מזל טוב לאמא ואבא - הדביקו חלק זה</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Check if we want a specific auto-login QR
+    const urlParams = new URLSearchParams(window.location.search);
+    const userParam = urlParams.get('user');
+    
+    let qrUrl = "https://mom-50.vercel.app/";
+    if (userParam === 'mom') qrUrl += "?login=mom";
+    if (userParam === 'dad') qrUrl += "?login=dad";
+
+    // Generate QR Code automatically
+    new QRCode(document.getElementById("qrcode"), {
+        text: qrUrl,
+        width: 128,
+        height: 128,
+        colorDark : "#800000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+</script>
+
+</body>
+</html>

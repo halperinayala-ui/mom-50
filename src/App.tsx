@@ -302,13 +302,36 @@ export default function App() {
     const savedIsAdmin = localStorage.getItem('birthday_is_admin') === 'true';
     const savedIsSuperAdmin = localStorage.getItem('birthday_is_superadmin') === 'true';
     
-    if (savedName) {
-      setUserName(savedName);
-      setIsAdmin(savedIsAdmin);
-      setIsSuperAdmin(savedIsSuperAdmin);
-      setSenderInput(savedName);
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginParam = urlParams.get('login');
+    
+    let initialName = savedName;
+    let initialIsAdmin = savedIsAdmin;
+    let initialIsSuperAdmin = savedIsSuperAdmin;
+    
+    if (loginParam === 'mom') {
+      initialName = 'אמא';
+      initialIsAdmin = true;
+      initialIsSuperAdmin = false;
+      localStorage.setItem('birthday_user_name', 'אמא');
+      localStorage.setItem('birthday_is_admin', 'true');
+      localStorage.setItem('birthday_is_superadmin', 'false');
+    } else if (loginParam === 'dad') {
+      initialName = 'אבא';
+      initialIsAdmin = true;
+      initialIsSuperAdmin = false;
+      localStorage.setItem('birthday_user_name', 'אבא');
+      localStorage.setItem('birthday_is_admin', 'true');
+      localStorage.setItem('birthday_is_superadmin', 'false');
+    }
+    
+    if (initialName) {
+      setUserName(initialName);
+      setIsAdmin(initialIsAdmin);
+      setIsSuperAdmin(initialIsSuperAdmin);
+      setSenderInput(initialName);
       
-      if (savedName === 'אמא' && !sessionStorage.getItem('mom_welcomed')) {
+      if (initialName === 'אמא' && !sessionStorage.getItem('mom_welcomed')) {
         setShowMomWelcome(true);
         sessionStorage.setItem('mom_welcomed', 'true');
       }
