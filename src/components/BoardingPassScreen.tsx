@@ -18,8 +18,8 @@ export function BoardingPassScreen() {
           
           <div className="flex justify-between items-center relative z-10">
             <div>
-              <p className="text-[#D4AF37] text-xs font-bold tracking-widest uppercase mb-1">Airline</p>
-              <h2 className="text-xl font-heading font-bold">MOM50 AIRLINES</h2>
+              <p className="text-[#D4AF37] text-xs font-bold tracking-widest uppercase mb-1">חברת תעופה</p>
+              <h2 className="text-xl font-heading font-bold">VIP 50 AIRLINES</h2>
             </div>
             <Plane className="w-8 h-8 text-[#D4AF37] opacity-80" />
           </div>
@@ -37,8 +37,8 @@ export function BoardingPassScreen() {
           <div className="flex justify-between items-center relative z-10 mb-8">
             <div className="text-right">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">From</p>
-              <h3 className="text-3xl font-black text-[#800000] font-heading">TLV</h3>
-              <p className="text-sm font-medium text-gray-600 mt-1">Tel Aviv</p>
+              <h3 className="text-3xl font-black text-[#800000] font-heading">49</h3>
+              <p className="text-sm font-medium text-gray-600 mt-1">שנות עשייה</p>
             </div>
             
             <div className="flex flex-col items-center px-4">
@@ -48,8 +48,8 @@ export function BoardingPassScreen() {
 
             <div className="text-left">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">To</p>
-              <h3 className="text-3xl font-black text-[#800000] font-heading">JFK</h3>
-              <p className="text-sm font-medium text-gray-600 mt-1">New York</p>
+              <h3 className="text-3xl font-black text-[#800000] font-heading">50</h3>
+              <p className="text-sm font-medium text-gray-600 mt-1">שנת היובל</p>
             </div>
           </div>
           
@@ -57,27 +57,27 @@ export function BoardingPassScreen() {
           <div className="grid grid-cols-2 gap-4 relative z-10 mt-8 pt-4">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">
-                 Passenger
+                 נוסעת
               </p>
               <p className="font-bold text-[#4a4843]">אמא</p>
             </div>
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">
-                 Seat
+                 מחלקה
               </p>
-              <p className="font-bold text-[#4a4843]">1A (VIP)</p>
+              <p className="font-bold text-[#4a4843]">ראשונה (VIP)</p>
             </div>
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">
-                 Destination
+                 יעד
               </p>
-              <p className="font-bold text-[#4a4843]">770 Eastern Pkwy</p>
+              <p className="font-bold text-[#4a4843]">אושר ובריאות</p>
             </div>
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">
-                 Flight
+                 טיסה
               </p>
-              <p className="font-bold text-[#4a4843]">MOM-50</p>
+              <p className="font-bold text-[#4a4843]">MAZAL-TOV</p>
             </div>
           </div>
         </div>
