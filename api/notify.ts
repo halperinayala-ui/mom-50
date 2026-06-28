@@ -60,6 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           await supabase.from('push_subscriptions').delete().eq('id', sub.id);
         } else {
           console.error('Error sending push to', sub.endpoint, err);
+          throw new Error(`שגיאה בשליחת פוש (קוד ${err.statusCode}): ${err.message}`);
         }
       }
     });

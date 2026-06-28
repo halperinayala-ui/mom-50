@@ -71,7 +71,7 @@ function GreetingCard({
   const isMom = currentUser === 'אמא';
   const isSender = greeting.sender === currentUser;
   const isUploader = greeting.uploaded_by === currentUser;
-  const canView = !greeting.is_private || isMom || isSender || isUploader;
+  const canView = !greeting.is_private || isMom || isUploader;
   const canEdit = isAdmin && (isUploader || (!greeting.uploaded_by && isSender));
 
   if (!canView) {
@@ -736,8 +736,26 @@ export default function App() {
 
   // 3. Main Greetings View
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 font-sans relative overflow-x-hidden">
-      <Toaster position="top-center" />
+    <div className="min-h-screen flex flex-col bg-[#FDFBF7] font-sans relative overflow-x-hidden">
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          style: {
+            background: '#FDFBF7',
+            color: '#800000',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            fontFamily: 'Assistant, sans-serif',
+            fontWeight: 600,
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+          },
+          success: {
+            iconTheme: { primary: '#800000', secondary: '#FDFBF7' }
+          },
+          error: {
+            iconTheme: { primary: '#e53e3e', secondary: '#FDFBF7' }
+          }
+        }} 
+      />
       
       <div className="absolute inset-0 pointer-events-none z-0 opacity-40">
         <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-[#f2e8d5] to-transparent"></div>
@@ -767,12 +785,7 @@ export default function App() {
           <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
         ) : (
           <AnimatePresence>
-            {greetings.filter(g => {
-              if (g.is_private) {
-                return isAdmin || userName === 'אמא' || g.uploaded_by === userName;
-              }
-              return true;
-            }).map((greeting) => (
+            {greetings.map((greeting) => (
               <GreetingCard 
                 key={greeting.id} 
                 greeting={greeting} 
