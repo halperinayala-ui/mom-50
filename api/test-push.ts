@@ -1,12 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import webPush from 'web-push';
 
-const VAPID_PUBLIC = process.env.VITE_VAPID_PUBLIC_KEY || '';
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || '';
+const VAPID_PUBLIC = 'BHDfKkQjTCeUfu9F513fYt6_Q6s_OA8Fpbh6KMAxnbuqjcyGwrePo17CA2JNj0p4_MSz77-BIoUzhOhRZOVTDY0';
+const VAPID_PRIVATE = 'D3K-ZyIs20NtPfAxoj9r5Z-e6phFLi1Dp1daTDX7-QU';
 
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webPush.setVapidDetails(
-    'mailto:ayala@example.com',
+    'mailto:contact@mom-50.vercel.app',
     VAPID_PUBLIC,
     VAPID_PRIVATE
   );

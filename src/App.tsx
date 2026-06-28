@@ -596,7 +596,7 @@ export default function App() {
 
       const registration = await navigator.serviceWorker.ready;
       
-      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      const vapidPublicKey = 'BHDfKkQjTCeUfu9F513fYt6_Q6s_OA8Fpbh6KMAxnbuqjcyGwrePo17CA2JNj0p4_MSz77-BIoUzhOhRZOVTDY0';
       if (!vapidPublicKey) {
         toast.error('חסר מפתח התראות במערכת');
         return;
