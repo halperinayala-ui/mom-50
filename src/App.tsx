@@ -950,11 +950,11 @@ export default function App() {
       <main className="relative z-10 flex-1 overflow-y-auto p-5 space-y-8 pb-32">
         {loading ? (
           <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
-        ) : greetings.filter(g => isAdmin || (g.is_approved !== false && g.is_approved !== 'false')).length === 0 ? (
+        ) : greetings.filter(g => isAdmin || (g.is_approved !== false)).length === 0 ? (
           <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
         ) : (
           <AnimatePresence>
-            {greetings.filter(g => isAdmin || (g.is_approved !== false && g.is_approved !== 'false')).map((greeting) => (
+            {greetings.filter(g => isAdmin || (g.is_approved !== false)).map((greeting) => (
               <GreetingCard 
                 key={greeting.id} 
                 greeting={greeting} 
