@@ -462,11 +462,16 @@ export default function App() {
         
         // Notify others
         try {
-          await fetch('/api/notify', {
+          const res = await fetch('/api/notify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sender: senderInput.trim(), title: 'ברכה חדשה!' })
           });
+          if (!res.ok) {
+            const errData = await res.json();
+            console.error('Push error from server:', errData);
+            toast.error(`שגיאה בשליחת פוש: ${errData.error}`);
+          }
         } catch (e) {
           console.error('Failed to trigger push notification', e);
         }

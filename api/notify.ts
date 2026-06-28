@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     res.status(200).json({ success: true, message: 'Notifications sent' });
   } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error('Global API Error:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 }
