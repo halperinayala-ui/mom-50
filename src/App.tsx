@@ -573,6 +573,11 @@ export default function App() {
         outputArray[i] = rawData.charCodeAt(i);
       }
 
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        await existingSubscription.unsubscribe();
+      }
+
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: outputArray
@@ -580,13 +585,13 @@ export default function App() {
 
       const subData = JSON.parse(JSON.stringify(subscription));
 
-      const { error } = await supabase.from('push_subscriptions').insert([{
+      const { error } = await supabase.from('push_subscriptions').upsert({
         endpoint: subData.endpoint,
         p256dh: subData.keys.p256dh,
         auth: subData.keys.auth
-      }]);
+      }, { onConflict: 'endpoint' });
 
-      if (error && error.code !== '23505') { // Ignore unique violation if already subscribed
+      if (error) {
         throw error;
       }
 
