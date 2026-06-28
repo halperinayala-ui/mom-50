@@ -200,6 +200,7 @@ function GreetingCard({
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [showMomWelcome, setShowMomWelcome] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -240,6 +241,11 @@ export default function App() {
       setUserName(savedName);
       setIsAdmin(savedIsAdmin);
       setSenderInput(savedName);
+      
+      if (savedName === 'אמא' && !sessionStorage.getItem('mom_welcomed')) {
+        setShowMomWelcome(true);
+        sessionStorage.setItem('mom_welcomed', 'true');
+      }
     }
   }, []);
 
@@ -269,14 +275,19 @@ export default function App() {
       // Secret admin login logic
       if (finalName.toLowerCase().endsWith('mom50')) {
          hasAdminRights = true;
-         finalName = finalName.slice(0, -5).trim(); // Remove 'mom50' from the end
+         finalName = finalName.slice(0, -5).trim() || 'מנהל'; // Remove 'mom50' from the end
       }
-      
+
       setUserName(finalName);
       setIsAdmin(hasAdminRights);
       setSenderInput(finalName);
       localStorage.setItem('birthday_user_name', finalName);
-      localStorage.setItem('birthday_is_admin', hasAdminRights ? 'true' : 'false');
+      localStorage.setItem('birthday_is_admin', hasAdminRights.toString());
+      
+      if (finalName === 'אמא') {
+        setShowMomWelcome(true);
+        sessionStorage.setItem('mom_welcomed', 'true');
+      }
     }
   };
 
@@ -586,6 +597,17 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (showMomWelcome) {
+      confetti({
+        particleCount: 200,
+        spread: 100,
+        origin: { y: 0.3 },
+        colors: ['#D4AF37', '#FFD700', '#FFFFFF', '#800000']
+      });
+    }
+  }, [showMomWelcome]);
+
   if (showSplash) {
     return (
       <AnimatePresence>
@@ -642,9 +664,51 @@ export default function App() {
     );
   }
 
-  // 2. Main Feed
+  // 2. Mom Welcome Screen
+  if (showMomWelcome) {
+    return (
+      <AnimatePresence>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-[#FDFBF7] flex flex-col items-center justify-center p-6 text-center"
+        >
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/20 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#800000]/10 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
+          </div>
+          
+          <motion.div
+            initial={{ scale: 0.8, y: 50 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
+            className="relative z-10 bg-white/60 backdrop-blur-md p-10 rounded-3xl border border-[#D4AF37]/30 shadow-2xl max-w-lg"
+          >
+            <Gift className="w-24 h-24 text-[#D4AF37] mx-auto mb-6 drop-shadow-md" strokeWidth={1.5} />
+            <h1 className="text-4xl md:text-5xl font-heading font-black text-[#800000] mb-4">
+              מזל טוב אמא! ❤️
+            </h1>
+            <p className="text-xl text-[#4a4843] leading-relaxed mb-8">
+              ברוכה הבאה לאפליקציית יום ההולדת שלך.<br/>
+              כולנו אספנו כאן ברכות, תמונות וסרטונים לכבודך.<br/>
+              אוהבים אותך המון!
+            </p>
+            <button 
+              onClick={() => setShowMomWelcome(false)}
+              className="bg-gradient-to-r from-[#800000] to-[#5a0000] text-white px-10 py-4 rounded-full font-bold text-xl shadow-[0_10px_20px_rgba(128,0,0,0.2)] hover:scale-105 transition-transform"
+            >
+              היכנסי למתנה
+            </button>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  // 3. Main Greetings View
   return (
-    <div className="min-h-screen max-w-md mx-auto bg-[#FDFBF7] shadow-2xl flex flex-col relative overflow-hidden font-sans">
+    <div className="min-h-screen flex flex-col bg-gray-50 font-sans relative overflow-x-hidden">
       <Toaster position="top-center" />
       
       <div className="absolute inset-0 pointer-events-none z-0 opacity-40">
