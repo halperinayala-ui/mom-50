@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Gift, Video, Image as ImageIcon, Send, Lock, Mic, FileText, X, Trash2, Edit2, Bell, Heart } from 'lucide-react';
+import { Gift, Video, Image as ImageIcon, Send, Lock, Mic, FileText, X, Trash2, Edit2, Bell, Heart, Share2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
@@ -787,6 +787,7 @@ export default function App() {
             fontWeight: 600,
             boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
           },
+          duration: 4000,
           success: {
             iconTheme: { primary: '#800000', secondary: '#FDFBF7' }
           },
@@ -839,9 +840,33 @@ export default function App() {
           </AnimatePresence>
         )}
 
-        <div className="text-center pt-8 pb-12 flex flex-col items-center">
+        <div className="text-center pt-8 pb-32 flex flex-col items-center">
           <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent mb-6"></div>
-          <p className="text-sm text-[#a09e99] tracking-widest uppercase font-light">עוד הפתעות בדרך...</p>
+          <p className="text-sm text-[#a09e99] tracking-widest uppercase font-light mb-6">עוד הפתעות בדרך...</p>
+          
+          <button
+            onClick={async () => {
+              const shareData = {
+                title: 'חוגגים 50 לאמא!',
+                text: 'הצטרפו אליי לאחל מזל טוב לאמא!',
+                url: 'https://mom-50.vercel.app'
+              };
+              try {
+                if (navigator.share) {
+                  await navigator.share(shareData);
+                } else {
+                  await navigator.clipboard.writeText('https://mom-50.vercel.app');
+                  toast.success('הקישור הועתק, אפשר לשלוח בוואצפ!');
+                }
+              } catch (err) {
+                // user cancelled share
+              }
+            }}
+            className="flex items-center justify-center gap-2 text-[#800000] font-bold bg-[#D4AF37]/10 py-3 px-6 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-colors shadow-sm"
+          >
+            <Share2 className="w-5 h-5" />
+            <span>שיתוף האפליקציה</span>
+          </button>
         </div>
       </main>
       
