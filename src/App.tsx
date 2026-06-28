@@ -617,12 +617,16 @@ export default function App() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-[100] bg-[#FDFBF7] flex items-center justify-center"
+          className="fixed inset-0 z-[100] bg-[#FDFBF7] flex items-center justify-center overflow-hidden"
         >
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/20 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#800000]/10 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
+          </div>
           <img 
-            src="/splash.png" 
-            alt="Splash Screen" 
-            className="w-full h-full object-cover"
+            src="/logo.png" 
+            alt="Splash Screen Logo" 
+            className="w-64 h-auto relative z-10 drop-shadow-xl"
           />
         </motion.div>
       </AnimatePresence>
