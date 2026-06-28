@@ -79,26 +79,24 @@ function JournalEntryCard({
   });
 
   useEffect(() => {
-    if (showComments) {
-      fetchComments();
+    fetchComments();
 
-      const channel = supabase
-        .channel(`public:comments:${entry.id}`)
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'comments', 
-          filter: `greeting_id=eq.${entry.id}` 
-        }, () => {
-          fetchComments();
-        })
-        .subscribe();
+    const channel = supabase
+      .channel(`public:comments:${entry.id}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'comments', 
+        filter: `greeting_id=eq.${entry.id}` 
+      }, () => {
+        fetchComments();
+      })
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [showComments, entry.id]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [entry.id]);
 
   const fetchComments = async () => {
     const { data, error } = await supabase
