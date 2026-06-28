@@ -9,7 +9,7 @@ import { supabase } from './lib/supabase';
 import AudioRecorder from './components/AudioRecorder';
 
 // --- Types ---
-type AppGreeting = Greeting & { isOpened?: boolean };
+type AppGreeting = Greeting & { isOpened?: boolean; isRead?: boolean };
 
 // --- Components ---
 
@@ -65,7 +65,8 @@ function GreetingCard({
   isAdmin: boolean,
   onDelete: (id: string) => void,
   onEdit: (greeting: AppGreeting) => void,
-  onHeart: (id: string) => void
+  onHeart: (id: string) => void,
+  onClose: () => void
 }) {
   // Privacy check
   const isMom = currentUser === 'אמא';
@@ -80,40 +81,67 @@ function GreetingCard({
   }
 
   if (!greeting.isOpened) {
-    return (
-      <motion.div 
-        layoutId={`card-${greeting.id}`}
-        onClick={onOpen}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className="cursor-pointer relative bg-gradient-to-br from-[#7d0a21] to-[#5a0000] rounded-3xl p-8 shadow-xl border border-[#D4AF37]/30 flex flex-col items-center justify-center min-h-[200px] group overflow-hidden"
-      >
-        {canEdit && (
-          <button 
-            onClick={(e) => { e.stopPropagation(); onDelete(greeting.id); }}
-            className="absolute top-4 left-4 p-2 bg-white/20 text-white rounded-full hover:bg-red-500 transition-colors z-20"
-            title="מחק ברכה"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#D4AF37]/10 rounded-full blur-xl transform -translate-x-1/2 translate-y-1/2"></div>
-        
+    if (!greeting.isRead) {
+      return (
         <motion.div 
-          animate={{ rotate: [0, -5, 5, -5, 5, 0] }}
-          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
-          className="relative z-10"
+          layoutId={`card-${greeting.id}`}
+          onClick={onOpen}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="cursor-pointer relative bg-gradient-to-br from-[#7d0a21] to-[#5a0000] rounded-3xl p-8 shadow-xl border border-[#D4AF37]/30 flex flex-col items-center justify-center min-h-[200px] group overflow-hidden"
         >
-          <Gift className="w-16 h-16 text-[#D4AF37] mb-4 drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]" strokeWidth={1} />
+          {canEdit && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDelete(greeting.id); }}
+              className="absolute top-4 left-4 p-2 bg-white/20 text-white rounded-full hover:bg-red-500 transition-colors z-20"
+              title="מחק ברכה"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#D4AF37]/10 rounded-full blur-xl transform -translate-x-1/2 translate-y-1/2"></div>
+          
+          <motion.div 
+            animate={{ rotate: [0, -5, 5, -5, 5, 0] }}
+            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
+            className="relative z-10"
+          >
+            <Gift className="w-16 h-16 text-[#D4AF37] mb-4 drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]" strokeWidth={1} />
+          </motion.div>
+          <h3 className="text-[#FDFBF7] font-heading font-medium text-2xl z-10 tracking-wide text-center">
+            מזל טוב חדש מ{greeting.sender}!
+          </h3>
+          <p className="text-[#D4AF37] text-sm mt-2 opacity-80 z-10">לחצי לפתיחה</p>
         </motion.div>
-        <h3 className="text-[#FDFBF7] font-heading font-medium text-2xl z-10 tracking-wide text-center">
-          מזל טוב חדש מ{greeting.sender}!
-        </h3>
-        <p className="text-[#D4AF37] text-sm mt-2 opacity-80 z-10">לחצי לפתיחה</p>
-      </motion.div>
-    );
+      );
+    } else {
+      return (
+        <motion.div 
+          layoutId={`card-${greeting.id}`}
+          onClick={onOpen}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          className="cursor-pointer relative bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between group overflow-hidden hover:border-[#D4AF37]/30 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 rounded-full bg-[#D4AF37]/10 flex items-center justify-center group-hover:bg-[#D4AF37]/20 transition-colors">
+               <Gift className="w-6 h-6 text-[#800000]" />
+             </div>
+             <div>
+               <h3 className="font-heading font-bold text-lg text-[#800000]">
+                 ברכה מ{greeting.sender}
+               </h3>
+               <p className="text-xs text-gray-400">{new Date(greeting.created_at).toLocaleDateString('he-IL')}</p>
+             </div>
+          </div>
+          <div className="text-[#800000] text-sm font-medium px-4 py-1.5 bg-[#D4AF37]/10 rounded-full group-hover:bg-[#D4AF37]/20 transition-colors flex items-center gap-1">
+            <span>פתיחה</span>
+          </div>
+        </motion.div>
+      );
+    }
   }
 
   const timeString = new Date(greeting.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
@@ -149,7 +177,11 @@ function GreetingCard({
 
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
-           <h3 className="font-heading font-bold text-2xl text-primary tracking-wide">
+           <h3 
+             className="font-heading font-bold text-2xl text-primary tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+             onClick={onClose}
+             title="לסגירת הברכה"
+           >
              {greeting.sender}
            </h3>
            {greeting.is_private && <Lock className="w-4 h-4 text-gray-400" aria-label="ברכה אישית" />}
@@ -264,10 +296,14 @@ export default function App() {
     if (error) {
       console.error('Error fetching greetings:', error);
     } else if (data) {
-      const savedOpened = JSON.parse(localStorage.getItem('opened_greetings') || '[]');
+      const savedRead = JSON.parse(localStorage.getItem('opened_greetings') || '[]');
       setGreetings(prev => data.map(g => {
         const existing = prev.find(p => p.id === g.id);
-        return { ...g, isOpened: existing?.isOpened || savedOpened.includes(g.id) || false };
+        return { 
+          ...g, 
+          isRead: existing?.isRead || savedRead.includes(g.id) || false,
+          isOpened: existing?.isOpened || false
+        };
       }));
     }
     setLoading(false);
@@ -373,7 +409,16 @@ export default function App() {
 
   const handleOpen = (id: string) => {
     setGreetings(prev => {
-      const next = prev.map(g => g.id === id ? { ...g, isOpened: true } : g);
+      const next = prev.map(g => g.id === id ? { ...g, isOpened: true, isRead: true } : g);
+      const readIds = next.filter(g => g.isRead).map(g => g.id);
+      localStorage.setItem('opened_greetings', JSON.stringify(readIds));
+      return next;
+    });
+  };
+
+  const handleClose = (id: string) => {
+    setGreetings(prev => {
+      const next = prev.map(g => g.id === id ? { ...g, isOpened: false } : g);
       const openedIds = next.filter(g => g.isOpened).map(g => g.id);
       localStorage.setItem('opened_greetings', JSON.stringify(openedIds));
       return next;
@@ -842,6 +887,7 @@ export default function App() {
                 onDelete={handleDelete}
                 onEdit={handleEdit}
                 onHeart={handleHeart}
+                onClose={() => handleClose(greeting.id)}
               />
             ))}
           </AnimatePresence>
