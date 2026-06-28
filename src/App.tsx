@@ -53,7 +53,6 @@ function GreetingCard({
   greeting, 
   onOpen, 
   currentUser, 
-  isAdmin, 
   onDelete, 
   onEdit 
 }: { 

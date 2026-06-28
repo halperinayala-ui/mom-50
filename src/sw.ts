@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { precacheAndRoute } from 'workbox-precaching';
 
 declare let self: ServiceWorkerGlobalScope;
