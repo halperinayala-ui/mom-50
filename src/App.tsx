@@ -57,7 +57,8 @@ function GreetingCard({
   isAdmin, 
   onDelete, 
   onEdit,
-  onHeart
+  onHeart,
+  onClose
 }: { 
   greeting: AppGreeting, 
   onOpen: () => void, 
