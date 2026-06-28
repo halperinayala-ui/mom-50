@@ -370,6 +370,15 @@ export default function App() {
       let hasAdminRights = false;
       let hasSuperAdminRights = false;
       
+      // Pin check for Mom and Dad
+      if (finalName === 'אמא' || finalName === 'אבא') {
+        const pin = prompt(`אנא הכנס קוד סודי עבור ${finalName}:`);
+        if (pin !== '5050') {
+          alert('קוד שגוי. נסו שוב.');
+          return;
+        }
+      }
+      
       // Secret super admin login logic
       if (finalName.toLowerCase().endsWith('ayala50')) {
          hasAdminRights = true;
@@ -406,7 +415,19 @@ export default function App() {
     // Guest URL support: if URL contains ?guest=Name, auto-login
     const params = new URLSearchParams(window.location.search);
     const guestName = params.get('guest');
-    if (guestName && !userName) {
+    const loginUser = params.get('login');
+    
+    if (loginUser === 'mom' && !userName) {
+        setUserName('אמא');
+        localStorage.setItem('birthday_user_name', 'אמא');
+        setShowMomWelcome(true);
+        sessionStorage.setItem('mom_welcomed', 'true');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (loginUser === 'dad' && !userName) {
+        setUserName('אבא');
+        localStorage.setItem('birthday_user_name', 'אבא');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (guestName && !userName) {
         setUserName(guestName);
         localStorage.setItem('birthday_user_name', guestName);
     }
