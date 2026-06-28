@@ -226,6 +226,7 @@ export default function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(true);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Splash screen timer
   useEffect(() => {
@@ -265,6 +266,13 @@ export default function App() {
     }
     setLoading(false);
   }, []);
+
+  // Scroll modal to top when opened
+  useEffect(() => {
+    if (showUploadModal && modalRef.current) {
+      modalRef.current.scrollTop = 0;
+    }
+  }, [showUploadModal]);
 
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -815,13 +823,14 @@ export default function App() {
       <AnimatePresence>
         {showUploadModal && (
           <motion.div 
-            initial={{ opacity: 0, y: '100%' }}
+            ref={modalRef}
+            initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
+            exit={{ opacity: 0, y: 50 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute inset-0 z-50 bg-[#FDFBF7] flex flex-col overflow-y-auto"
+            className="fixed inset-0 z-50 bg-[#FDFBF7] flex flex-col overflow-y-auto pb-8"
           >
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md p-4 flex justify-between items-center border-b border-gray-100 z-10">
+            <div className="sticky top-0 bg-[#FDFBF7]/90 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-primary/10 shadow-sm z-10">
               <h2 className="text-xl font-heading font-bold text-primary">{editingGreetingId ? 'עריכת ברכה' : 'ברכה חדשה'}</h2>
               <button onClick={() => { setShowUploadModal(false); resetForm(); }} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
                 <X className="w-5 h-5 text-gray-600" />
