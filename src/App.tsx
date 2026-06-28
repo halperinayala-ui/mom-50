@@ -266,6 +266,7 @@ export default function App() {
 
   // Upload Modal State
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadErrorMsg, setUploadErrorMsg] = useState<string | null>(null);
   const [editingGreetingId, setEditingGreetingId] = useState<string | null>(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState<string | null>(null);
   const [isJournalUpload, setIsJournalUpload] = useState(false);
@@ -412,16 +413,19 @@ localStorage.setItem('birthday_is_superadmin', 'false');
     const params = new URLSearchParams(window.location.search);
     const guestName = params.get('guest');
     const loginUser = params.get('login');
-    
     if (loginUser === 'mom' && !userName) {
         setUserName('אמא');
+        setIsAdmin(true);
         localStorage.setItem('birthday_user_name', 'אמא');
+        localStorage.setItem('birthday_is_admin', 'true');
         setShowParentsWelcome(true);
         sessionStorage.setItem('parents_welcomed', 'true');
         window.history.replaceState({}, document.title, window.location.pathname);
     } else if (loginUser === 'dad' && !userName) {
         setUserName('אבא');
+        setIsAdmin(true);
         localStorage.setItem('birthday_user_name', 'אבא');
+        localStorage.setItem('birthday_is_admin', 'true');
         setShowParentsWelcome(true);
         sessionStorage.setItem('parents_welcomed', 'true');
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -534,15 +538,17 @@ localStorage.setItem('birthday_is_superadmin', 'false');
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userName || !isAdmin) return;
+    setUploadErrorMsg(null);
+    const isTraveler = userName === 'אמא' || userName === 'אבא';
+    if (!userName || (!isAdmin && !isTraveler)) return;
     
     if (!senderInput.trim()) {
-      toast.error('חובה להזין את שם השולח');
+      setUploadErrorMsg('חובה להזין את שם השולח');
       return;
     }
 
     if (type !== 'text' && !file && !existingMediaUrl) {
-      toast.error('חובה להוסיף קובץ מדיה');
+      setUploadErrorMsg('חובה להוסיף קובץ מדיה');
       return;
     }
 
@@ -646,8 +652,8 @@ localStorage.setItem('birthday_is_superadmin', 'false');
       setShowUploadModal(false);
 
     } catch (error: any) {
-      console.error(error);
-      toast.error(`שגיאה: ${error.message || 'לא הצלחנו להעלות'}`, { id: toastId });
+      console.error('Error uploading:', error);
+      setUploadErrorMsg(`שגיאה: ${error.message || 'נסו שוב. ייתכן והקובץ גדול מדי.'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -766,6 +772,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
     setEditingGreetingId(null);
     setExistingMediaUrl(null);
     setIsJournalUpload(false);
+    setUploadErrorMsg(null);
   }
 
   // Subscribe to push notifications
@@ -1044,6 +1051,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
               setExistingMediaUrl(null);
               setSenderInput(userName || '');
               setIsJournalUpload(true);
+              setUploadErrorMsg(null);
               setShowUploadModal(true);
             }} 
             onEdit={handleEdit}
@@ -1269,6 +1277,12 @@ localStorage.setItem('birthday_is_superadmin', 'false');
                     <span className="font-bold flex items-center gap-1"><Lock className="w-3 h-3" /> ברכה אישית</span>
                     <span className="text-xs text-gray-500">רק אמא ואני נוכל לראות את הברכה הזו.</span>
                   </label>
+                </div>
+              )}
+
+              {uploadErrorMsg && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-medium">
+                  {uploadErrorMsg}
                 </div>
               )}
 
