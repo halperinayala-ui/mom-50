@@ -134,13 +134,12 @@ function GreetingCard({
              <div className="w-12 h-12 rounded-full bg-[#D4AF37]/10 flex items-center justify-center group-hover:bg-[#D4AF37]/20 transition-colors">
                <Gift className="w-6 h-6 text-[#800000]" />
              </div>
-             <div>
-               <h3 className="font-heading font-bold text-lg text-[#800000]">
-                 ברכה מ{greeting.sender}
-               </h3>
-               <p className="text-xs text-gray-400">{new Date(greeting.created_at).toLocaleDateString('he-IL')}</p>
-             </div>
-          </div>
+              <div>
+                <h3 className="font-heading font-bold text-lg text-[#800000]">
+                  ברכה מ{greeting.sender}
+                </h3>
+              </div>
+           </div>
           <div className="text-[#800000] text-sm font-medium px-4 py-1.5 bg-[#D4AF37]/10 rounded-full group-hover:bg-[#D4AF37]/20 transition-colors flex items-center gap-1">
             <span>פתיחה</span>
           </div>
@@ -654,9 +653,9 @@ export default function App() {
               toast.dismiss(t.id);
               const { error } = await supabase.from('greetings').delete().eq('id', id);
               if (error) {
-                toast.error('שגיאה במחיקה');
+                toast.error('שגיאה במחיקה', { duration: 3000 });
               } else {
-                toast.success('הברכה נמחקה');
+                toast.success('הברכה נמחקה', { duration: 3000 });
                 fetchGreetings();
               }
             }}
@@ -951,11 +950,11 @@ export default function App() {
       <main className="relative z-10 flex-1 overflow-y-auto p-5 space-y-8 pb-32">
         {loading ? (
           <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
-        ) : greetings.filter(g => userName === 'אילה' || g.is_approved !== false).length === 0 ? (
+        ) : greetings.filter(g => isAdmin || (g.is_approved !== false && g.is_approved !== 'false')).length === 0 ? (
           <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
         ) : (
           <AnimatePresence>
-            {greetings.filter(g => userName === 'אילה' || g.is_approved !== false).map((greeting) => (
+            {greetings.filter(g => isAdmin || (g.is_approved !== false && g.is_approved !== 'false')).map((greeting) => (
               <GreetingCard 
                 key={greeting.id} 
                 greeting={greeting} 
