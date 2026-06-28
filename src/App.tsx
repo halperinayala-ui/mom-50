@@ -229,6 +229,10 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
+  const [notifPermission, setNotifPermission] = useState<string>(
+    'Notification' in window ? Notification.permission : 'default'
+  );
+
   // Splash screen timer
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 2500);
@@ -633,6 +637,7 @@ export default function App() {
         throw error;
       }
 
+      setNotifPermission(Notification.permission);
       toast.success('הירשמות להתראות בוצעה בהצלחה!');
 
     } catch (error: any) {
@@ -731,22 +736,43 @@ export default function App() {
             initial={{ scale: 0.8, y: 50 }}
             animate={{ scale: 1, y: 0 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
-            className="relative z-10 bg-white/60 backdrop-blur-md p-10 rounded-3xl border border-[#D4AF37]/30 shadow-2xl max-w-lg"
+            className="relative z-10 bg-white/60 backdrop-blur-md p-8 md:p-10 rounded-3xl border border-[#D4AF37]/30 shadow-2xl max-w-lg w-full mx-4"
           >
             <Gift className="w-24 h-24 text-[#D4AF37] mx-auto mb-6 drop-shadow-md" strokeWidth={1.5} />
             <h1 className="text-4xl md:text-5xl font-heading font-black text-[#800000] mb-4">
               מזל טוב אמא! ❤️
             </h1>
-            <p className="text-xl text-[#4a4843] leading-relaxed mb-8">
+            <p className="text-xl text-[#4a4843] leading-relaxed mb-6">
               ברוכה הבאה לאפליקציית יום ההולדת שלך.<br/>
               כולנו אספנו כאן ברכות, תמונות וסרטונים לכבודך.<br/>
               אוהבים אותך המון!
             </p>
+
+            {'Notification' in window && notifPermission !== 'granted' && notifPermission !== 'denied' && (
+              <div className="bg-[#D4AF37]/10 p-5 rounded-2xl mb-8 border border-[#D4AF37]/30 shadow-inner">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Bell className="w-5 h-5 text-[#800000]" />
+                  <h3 className="font-bold text-[#800000] text-lg">עדכונים בזמן אמת</h3>
+                </div>
+                <p className="text-sm text-[#800000]/80 mb-4">
+                  ממליצים להפעיל התראות כדי לקבל עדכון לטלפון על כל ברכה חדשה שמוסיפים!
+                </p>
+                <button
+                  onClick={async () => {
+                    await subscribeToPush();
+                  }}
+                  className="bg-white text-[#800000] px-6 py-2.5 rounded-full text-sm font-bold shadow-sm border border-[#D4AF37]/30 hover:bg-[#FDFBF7] hover:scale-105 transition-all w-full"
+                >
+                  כן, אני רוצה לקבל התראות
+                </button>
+              </div>
+            )}
+
             <button 
               onClick={() => setShowMomWelcome(false)}
-              className="bg-gradient-to-r from-[#800000] to-[#5a0000] text-white px-10 py-4 rounded-full font-bold text-xl shadow-[0_10px_20px_rgba(128,0,0,0.2)] hover:scale-105 transition-transform"
+              className="bg-gradient-to-r from-[#800000] to-[#5a0000] text-white px-10 py-4 rounded-full font-bold text-xl shadow-[0_10px_20px_rgba(128,0,0,0.2)] hover:scale-105 transition-transform w-full"
             >
-              כניסה
+              כניסה לברכות
             </button>
           </motion.div>
         </motion.div>
