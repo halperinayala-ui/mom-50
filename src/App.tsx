@@ -535,7 +535,7 @@ export default function App() {
           <form onSubmit={handleNameSubmit}>
             <input 
               type="text" 
-              placeholder="למשל: דניאל, אבא, רותי..." 
+              placeholder="למשל: אמא, סבתאלה, חני, דובי"
               value={nameInput}
               onChange={e => setNameInput(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 mb-4 text-center focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg"
