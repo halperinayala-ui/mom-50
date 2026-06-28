@@ -939,8 +939,8 @@ localStorage.setItem('birthday_is_superadmin', 'false');
             </h1>
             <p className="text-xl text-[#4a4843] leading-relaxed mb-6 whitespace-pre-wrap">
               {userName === 'אמא' 
-                ? 'ברוכה הבאה לאפליקציית יום ההולדת שלך!\nמחכה לך כאן יומן מסע אישי שבו תוכלי לשתף חוויות, תמונות ורגעים יפים.\nובנוסף – אספנו כאן המון ברכות, תמונות וסרטונים לכבודך.'
-                : 'ברוך הבא לאפליקציית יום ההולדת!\nמחכה לכם כאן יומן מסע משותף שבו תוכל לשתף חוויות, תמונות ורגעים יפים.\nובנוסף – תוכלו לראות את כל הברכות המרגשות שאספנו.'}
+                ? 'ברוכה הבאה לאפליקציית יום ההולדת שלך! מחכה לך כאן יומן מסע אישי שבו תוכלי לשתף חוויות, תמונות ורגעים מיוחדים. ובנוסף אספנו לכבודך ברכות יום הולדת והפתעות - עדכונים בדרך...'
+                : 'ברוך הבא לאפליקציית יום ההולדת! מחכה לכם כאן יומן מסע משותף שבו תוכל לשתף חוויות, תמונות ורגעים מיוחדים. ובנוסף אספנו לכבוד אמא ברכות יום הולדת והפתעות - עדכונים בדרך...'}
             </p>
 
             {'Notification' in window && notifPermission !== 'granted' && notifPermission !== 'denied' && (
@@ -1155,6 +1155,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
       <AnimatePresence>
         {showUploadModal && (
           <motion.div 
+            key="upload-modal"
             ref={modalRef}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
