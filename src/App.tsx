@@ -75,7 +75,8 @@ function GreetingCard({
   const isUploader = greeting.uploaded_by === currentUser;
   const isOldSender = !greeting.uploaded_by && isSender && isAdmin;
   const canView = !greeting.is_private || isMom || isUploader || isOldSender;
-  const canEdit = isAdmin && (isUploader || (!greeting.uploaded_by && isSender));
+  const isSuperAdmin = currentUser === 'אילה';
+  const canEdit = isSuperAdmin || (isAdmin && (isUploader || (!greeting.uploaded_by && isSender)));
 
   if (!canView) {
     return <LockedGreetingCard greeting={greeting} currentUser={currentUser} isAdmin={isAdmin} onDelete={onDelete} />;
@@ -297,6 +298,10 @@ export default function App() {
     if (error) {
       console.error('Error fetching greetings:', error);
     } else if (data) {
+      if (userName) {
+        setIsAdmin(localStorage.getItem('birthday_is_admin') === 'true');
+      }
+      
       const savedRead = JSON.parse(localStorage.getItem('opened_greetings') || '[]');
       setGreetings(prev => data.map(g => {
         const existing = prev.find(p => p.id === g.id);
@@ -308,7 +313,7 @@ export default function App() {
       }));
     }
     setLoading(false);
-  }, []);
+  }, [userName]);
 
   // Scroll modal to top when opened
   useEffect(() => {
@@ -323,10 +328,15 @@ export default function App() {
       let finalName = nameInput.trim();
       let hasAdminRights = false;
       
-      // Secret admin login logic
-      if (finalName.toLowerCase().endsWith('mom50')) {
+      // Secret super admin login logic
+      if (finalName.toLowerCase().endsWith('ayala50')) {
          hasAdminRights = true;
-         finalName = finalName.slice(0, -5).trim() || 'מנהל'; // Remove 'mom50' from the end
+         finalName = finalName.slice(0, -7).trim() || 'אילה';
+      }
+      // Secret admin login logic
+      else if (finalName.toLowerCase().endsWith('mom50')) {
+         hasAdminRights = true;
+         finalName = finalName.slice(0, -5).trim() || 'מנהל'; 
       }
 
       setUserName(finalName);
@@ -346,6 +356,14 @@ export default function App() {
   useEffect(() => {
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIosDevice);
+
+    // Guest URL support: if URL contains ?guest=Name, auto-login
+    const params = new URLSearchParams(window.location.search);
+    const guestName = params.get('guest');
+    if (guestName && !userName) {
+        setUserName(guestName);
+        localStorage.setItem('birthday_user_name', guestName);
+    }
 
     const handler = (e: any) => {
       e.preventDefault();
