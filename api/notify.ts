@@ -55,8 +55,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         await webPush.sendNotification(pushSubscription, notificationPayload);
       } catch (err: any) {
-        if (err.statusCode === 404 || err.statusCode === 410) {
-          // Subscription expired, remove it
+        if (err.statusCode === 404 || err.statusCode === 410 || err.statusCode === 403) {
+          // Subscription expired or invalid (e.g. wrong VAPID keys), remove it
           await supabase.from('push_subscriptions').delete().eq('id', sub.id);
         } else {
           console.error('Error sending push to', sub.endpoint, err);

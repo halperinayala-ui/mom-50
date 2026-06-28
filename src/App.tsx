@@ -71,7 +71,8 @@ function GreetingCard({
   const isMom = currentUser === 'אמא';
   const isSender = greeting.sender === currentUser;
   const isUploader = greeting.uploaded_by === currentUser;
-  const canView = !greeting.is_private || isMom || isUploader;
+  const isOldSender = !greeting.uploaded_by && isSender && isAdmin;
+  const canView = !greeting.is_private || isMom || isUploader || isOldSender;
   const canEdit = isAdmin && (isUploader || (!greeting.uploaded_by && isSender));
 
   if (!canView) {
@@ -527,16 +528,34 @@ export default function App() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!isAdmin) return;
-    if (!window.confirm('האם את בטוחה שאת רוצה למחוק את הברכה הזו?')) return;
-    
-    try {
-      const { error } = await supabase.from('greetings').delete().eq('id', id);
-      if (error) throw error;
-      toast.success('הברכה נמחקה');
-    } catch (error) {
-      toast.error('שגיאה במחיקת הברכה');
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-4 text-center">
+        <p className="font-semibold">האם את בטוחה שברצונך למחוק ברכה זו?</p>
+        <div className="flex gap-2 justify-center">
+          <button 
+            className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const { error } = await supabase.from('greetings').delete().eq('id', id);
+              if (error) {
+                toast.error('שגיאה במחיקה');
+              } else {
+                toast.success('הברכה נמחקה');
+                fetchGreetings();
+              }
+            }}
+          >
+            כן, למחוק
+          </button>
+          <button 
+            className="bg-gray-200 text-gray-800 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-gray-300 transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            ביטול
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const handleEdit = (greeting: AppGreeting) => {
