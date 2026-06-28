@@ -251,7 +251,7 @@ function GreetingCard({
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [showMomWelcome, setShowMomWelcome] = useState(false);
+  const [showParentsWelcome, setShowParentsWelcome] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -322,7 +322,7 @@ export default function App() {
       initialIsSuperAdmin = false;
       localStorage.setItem('birthday_user_name', 'אבא');
       localStorage.setItem('birthday_is_admin', 'true');
-      localStorage.setItem('birthday_is_superadmin', 'false');
+localStorage.setItem('birthday_is_superadmin', 'false');
     }
     
     if (initialName) {
@@ -331,10 +331,6 @@ export default function App() {
       setIsSuperAdmin(initialIsSuperAdmin);
       setSenderInput(initialName);
       
-      if (initialName === 'אמא' && !sessionStorage.getItem('mom_welcomed')) {
-        setShowMomWelcome(true);
-        sessionStorage.setItem('mom_welcomed', 'true');
-      }
     }
   }, []);
 
@@ -400,9 +396,9 @@ export default function App() {
       localStorage.setItem('birthday_is_admin', hasAdminRights.toString());
       localStorage.setItem('birthday_is_superadmin', hasSuperAdminRights.toString());
       
-      if (finalName === 'אמא') {
-        setShowMomWelcome(true);
-        sessionStorage.setItem('mom_welcomed', 'true');
+      if (finalName === 'אמא' || finalName === 'אבא') {
+        setShowParentsWelcome(true);
+        sessionStorage.setItem('parents_welcomed', 'true');
       }
     }
   };
@@ -420,12 +416,14 @@ export default function App() {
     if (loginUser === 'mom' && !userName) {
         setUserName('אמא');
         localStorage.setItem('birthday_user_name', 'אמא');
-        setShowMomWelcome(true);
-        sessionStorage.setItem('mom_welcomed', 'true');
+        setShowParentsWelcome(true);
+        sessionStorage.setItem('parents_welcomed', 'true');
         window.history.replaceState({}, document.title, window.location.pathname);
     } else if (loginUser === 'dad' && !userName) {
         setUserName('אבא');
         localStorage.setItem('birthday_user_name', 'אבא');
+        setShowParentsWelcome(true);
+        sessionStorage.setItem('parents_welcomed', 'true');
         window.history.replaceState({}, document.title, window.location.pathname);
     } else if (guestName && !userName) {
         setUserName(guestName);
@@ -834,7 +832,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (showMomWelcome) {
+    if (showParentsWelcome) {
       confetti({
         particleCount: 200,
         spread: 100,
@@ -842,7 +840,7 @@ export default function App() {
         colors: ['#D4AF37', '#FFD700', '#FFFFFF', '#800000']
       });
     }
-  }, [showMomWelcome]);
+  }, [showParentsWelcome]);
 
   if (showSplash) {
     return (
@@ -914,8 +912,8 @@ export default function App() {
     );
   }
 
-  // 2. Mom Welcome Screen
-  if (showMomWelcome) {
+  // 2. Parents Welcome Screen
+  if (showParentsWelcome) {
     return (
       <AnimatePresence>
         <motion.div 
@@ -937,12 +935,12 @@ export default function App() {
           >
             <Gift className="w-24 h-24 text-[#D4AF37] mx-auto mb-6 drop-shadow-md" strokeWidth={1.5} />
             <h1 className="text-4xl md:text-5xl font-heading font-black text-[#800000] mb-4">
-              מזל טוב אמא! ❤️
+              {userName === 'אמא' ? 'מזל טוב אמא! ❤️' : 'איזה כיף שאתה כאן אבא! ❤️'}
             </h1>
-            <p className="text-xl text-[#4a4843] leading-relaxed mb-6">
-              ברוכה הבאה לאפליקציית יום ההולדת שלך.<br/>
-              כולנו אספנו כאן ברכות, תמונות וסרטונים לכבודך.<br/>
-              אוהבים אותך המון!
+            <p className="text-xl text-[#4a4843] leading-relaxed mb-6 whitespace-pre-wrap">
+              {userName === 'אמא' 
+                ? 'ברוכה הבאה לאפליקציית יום ההולדת והטיול שלך!\nמעבר לברכות שאספנו עבורך, מחכה לך כאן יומן מסע אישי.\nתוכלי לשתף בו חוויות, תמונות ורגעים יפים מהטיול.'
+                : 'ברוך הבא לאפליקציית הטיול!\nבנוסף לברכות, מחכה לכם כאן יומן מסע משותף.\nתוכל לשתף בו חוויות, תמונות ורגעים יפים מניו יורק.'}
             </p>
 
             {'Notification' in window && notifPermission !== 'granted' && notifPermission !== 'denied' && (
@@ -966,10 +964,10 @@ export default function App() {
             )}
 
             <button 
-              onClick={() => setShowMomWelcome(false)}
+              onClick={() => setShowParentsWelcome(false)}
               className="bg-gradient-to-r from-[#800000] to-[#5a0000] text-white px-10 py-4 rounded-full font-bold text-xl shadow-[0_10px_20px_rgba(128,0,0,0.2)] hover:scale-105 transition-transform w-full"
             >
-              כניסה לברכות
+              כניסה לאפליקציה
             </button>
           </motion.div>
         </motion.div>

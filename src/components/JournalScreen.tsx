@@ -41,7 +41,7 @@ export function JournalScreen({
 
       {journalEntries.length === 0 ? (
         <div className="text-center text-gray-400 py-10 font-light bg-white/50 rounded-2xl border border-[#D4AF37]/20">
-          אמא עדיין לא שיתפה חוויות מהמסע...
+          אמא ואבא עדיין לא שיתפו חוויות מהמסע...
         </div>
       ) : (
         journalEntries.map(entry => (
