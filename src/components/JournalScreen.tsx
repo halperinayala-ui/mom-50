@@ -72,6 +72,8 @@ function JournalEntryCard({
   const [comments, setComments] = useState<Comment[]>([]);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentText, setEditCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const timeString = new Date(entry.created_at).toLocaleString('he-IL', { 
@@ -139,6 +141,28 @@ function JournalEntryCard({
       }).catch(console.error);
     }
     setIsSubmitting(false);
+  };
+
+  const handleUpdateComment = async (id: string) => {
+    if (!editCommentText.trim()) return;
+    const { error } = await supabase.from('comments').update({ content: editCommentText.trim() }).eq('id', id);
+    if (error) {
+      toast.error('שגיאה בעדכון התגובה');
+    } else {
+      setEditingCommentId(null);
+      fetchComments();
+    }
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    if (window.confirm('למחוק את התגובה?')) {
+      const { error } = await supabase.from('comments').delete().eq('id', id);
+      if (error) {
+        toast.error('שגיאה במחיקת התגובה');
+      } else {
+        fetchComments();
+      }
+    }
   };
 
   const handleLike = async () => {
@@ -256,9 +280,46 @@ function JournalEntryCard({
               <p className="text-center text-xs text-gray-400 py-2">אין עדיין תגובות. תהיו הראשונים להגיב!</p>
             ) : (
               comments.map(c => (
-                <div key={c.id} className="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 text-sm">
-                  <span className="font-bold text-[#800000] ml-2">{c.author}:</span>
-                  <span className="text-gray-700">{c.content}</span>
+                <div key={c.id} className="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 text-sm group relative">
+                  {editingCommentId === c.id ? (
+                    <div className="flex gap-2 w-full mt-1">
+                      <input 
+                        type="text" 
+                        value={editCommentText}
+                        onChange={(e) => setEditCommentText(e.target.value)}
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-sm outline-none focus:border-[#D4AF37]"
+                        autoFocus
+                      />
+                      <button onClick={() => handleUpdateComment(c.id)} className="text-xs font-bold text-[#D4AF37]">שמור</button>
+                      <button onClick={() => setEditingCommentId(null)} className="text-xs text-gray-500">בטל</button>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-bold text-[#800000] ml-2">{c.author}:</span>
+                        <span className="text-gray-700">{c.content}</span>
+                      </div>
+                      {c.author === currentUser && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => {
+                              setEditingCommentId(c.id);
+                              setEditCommentText(c.content);
+                            }} 
+                            className="text-xs text-gray-400 hover:text-[#D4AF37] px-1"
+                          >
+                            ערוך
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteComment(c.id)}
+                            className="text-xs text-gray-400 hover:text-red-500 px-1"
+                          >
+                            מחק
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))
             )}
