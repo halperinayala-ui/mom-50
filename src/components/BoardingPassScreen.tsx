@@ -71,7 +71,7 @@ export function BoardingPassScreen({ userName }: { userName: string | null }) {
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">
                  יעד
               </p>
-              <p className="font-bold text-[#4a4843]">אושר ובריאות</p>
+              <p className="font-bold text-[#4a4843]">כה יתן וכה יוסיף</p>
             </div>
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">

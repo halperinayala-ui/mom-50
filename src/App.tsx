@@ -594,14 +594,18 @@ export default function App() {
         });
 
         if (insertError) throw insertError;
-        toast.success('הברכה עלתה בהצלחה!', { id: toastId });
+        toast.success(isJournalUpload ? 'החוויה עלתה בהצלחה!' : 'הברכה עלתה בהצלחה!', { id: toastId });
         
         // Notify others
         try {
           const res = await fetch('/api/notify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sender: senderInput.trim(), title: 'ברכה חדשה!' })
+            body: JSON.stringify({ 
+              sender: senderInput.trim(), 
+              title: isJournalUpload ? 'יומן מסע אישי' : 'ברכה חדשה!',
+              body: isJournalUpload ? `${senderInput.trim()} העלה/תה חוויה חדשה למסע!` : `ברכה חדשה מ-${senderInput.trim()}`
+            })
           });
           if (!res.ok) {
             const errData = await res.json();
@@ -729,6 +733,7 @@ export default function App() {
     setContent(greeting.content);
     setIsPrivate(greeting.is_private);
     setExistingMediaUrl(greeting.media_url || null);
+    setIsJournalUpload(greeting.is_journal_entry || false);
     
     setShowUploadModal(true);
   };
@@ -1012,10 +1017,18 @@ export default function App() {
             currentUser={userName} 
             isTraveler={userName === 'אמא' || userName === 'אבא'} 
             onUploadClick={() => {
-              resetForm();
+              setFile(null);
+              setContent('');
+              setType('image');
+              setIsPrivate(false);
+              setEditingGreetingId(null);
+              setExistingMediaUrl(null);
+              setSenderInput(userName || '');
               setIsJournalUpload(true);
               setShowUploadModal(true);
             }} 
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
 
@@ -1154,7 +1167,7 @@ export default function App() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">סוג הברכה</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">סוג המדיה</label>
                 <div className="flex gap-2 p-1 bg-gray-50 rounded-xl border border-gray-200">
                   {(['text', 'image', 'video', 'audio'] as GreetingType[]).map((t) => (
                     <button
@@ -1216,7 +1229,7 @@ export default function App() {
                 <textarea 
                   value={content}
                   onChange={e => setContent(e.target.value)}
-                  placeholder="כתבו כאן את הברכה..."
+                  placeholder="כתבו כאן..."
                   rows={4}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
                   required={type === 'text'}
@@ -1244,7 +1257,7 @@ export default function App() {
                 disabled={isSubmitting}
                 className="w-full bg-primary text-white py-4 rounded-xl font-bold tracking-wide hover:bg-primary-light transition-colors shadow-lg shadow-primary/30 disabled:opacity-70 disabled:cursor-not-allowed mb-10"
               >
-                {isSubmitting ? (editingGreetingId ? 'מעדכן...' : 'מעלה...') : isJournalUpload ? (editingGreetingId ? 'שמור שינויים' : 'שתף חוויה') : (editingGreetingId ? 'שמור שינויים' : 'שליחת הברכה')}
+                {isSubmitting ? (editingGreetingId ? 'מעדכן...' : 'מעלה...') : isJournalUpload ? (editingGreetingId ? 'שמור שינויים' : 'שיתוף חוויה') : (editingGreetingId ? 'שמור שינויים' : 'שליחת הברכה')}
               </button>
             </form>
           </motion.div>

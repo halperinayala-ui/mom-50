@@ -9,12 +9,16 @@ export function JournalScreen({
   greetings, 
   currentUser, 
   isTraveler,
-  onUploadClick
+  onUploadClick,
+  onEdit,
+  onDelete
 }: { 
   greetings: Greeting[], 
   currentUser: string | null,
   isTraveler: boolean,
-  onUploadClick: () => void
+  onUploadClick: () => void,
+  onEdit: (greeting: Greeting) => void,
+  onDelete: (id: string) => void
 }) {
   const journalEntries = greetings.filter(g => g.is_journal_entry);
   
@@ -30,7 +34,7 @@ export function JournalScreen({
             className="bg-[#800000] text-[#FDFBF7] px-4 py-2 rounded-full shadow-md flex items-center gap-2 hover:bg-[#600000] transition-colors"
           >
             <Camera className="w-4 h-4" />
-            <span className="text-sm font-bold">שתפי חוויה</span>
+            <span className="text-sm font-bold">שיתוף חוויה</span>
           </button>
         )}
       </div>
@@ -96,6 +100,17 @@ function JournalEntryCard({ entry, currentUser }: { entry: Greeting, currentUser
     } else {
       setNewComment('');
       fetchComments();
+      
+      // Send push notification for comment
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          sender: currentUser, 
+          title: 'תגובה חדשה ביומן המסע',
+          body: `${currentUser} הגיב/ה על החוויה של ${entry.sender}`
+        })
+      }).catch(console.error);
     }
     setIsSubmitting(false);
   };
@@ -120,12 +135,20 @@ function JournalEntryCard({ entry, currentUser }: { entry: Greeting, currentUser
     if (error) {
       toast.error('שגיאה בשמירת לייק');
     } else {
-      entry.read_by = newReadBy; // optimistic local update handled by parent usually, but we mutate locally for fast UI
+      entry.read_by = newReadBy;
     }
   };
 
   const hasLiked = currentUser ? (entry.read_by || []).includes(currentUser) : false;
   const likesCount = (entry.read_by || []).length;
+
+  const renderLikesText = () => {
+    const likers = entry.read_by || [];
+    if (likers.length === 0) return 'לייק';
+    if (likers.length === 1) return likers[0] === currentUser ? 'אהבת' : `${likers[0]} אהב/ה`;
+    if (likers.length === 2) return `${likers[0]} ו-${likers[1]} אהבו`;
+    return `${likers[0]}, ${likers[1]} ועוד ${likers.length - 2} אהבו`;
+  };
 
   return (
     <motion.div 
@@ -144,6 +167,25 @@ function JournalEntryCard({ entry, currentUser }: { entry: Greeting, currentUser
             <p className="text-xs text-gray-400">{timeString}</p>
           </div>
         </div>
+        
+        {currentUser === entry.sender && (
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => onEdit(entry)}
+              className="p-1.5 text-gray-400 hover:text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded-full transition-colors"
+              title="עריכה"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            <button 
+              onClick={() => onDelete(entry.id)}
+              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              title="מחיקה"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -169,7 +211,7 @@ function JournalEntryCard({ entry, currentUser }: { entry: Greeting, currentUser
           className={`flex items-center gap-1.5 transition-colors ${hasLiked ? 'text-[#800000]' : 'text-gray-500 hover:text-gray-700'}`}
         >
           <Heart className={`w-5 h-5 ${hasLiked ? 'fill-current' : ''}`} />
-          <span className="text-sm font-medium">{likesCount > 0 ? likesCount : 'לייק'}</span>
+          <span className="text-sm font-medium">{renderLikesText()}</span>
         </button>
 
         <button 
