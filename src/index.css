@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #7d0a21; /* Deep burgundy/maroon from the logo */
+  --color-primary-light: #9e112e;
+  --color-accent: #c29b4e; /* Gold from the logo */
+  --color-accent-light: #e6b95c;
+  --color-background: #fdfaf5; /* Cream/warm white */
+  
+  --font-sans: 'Assistant', system-ui, sans-serif;
+  --font-heading: 'Frank Ruhl Libre', serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-gray-800 font-sans antialiased;
+    direction: rtl;
+  }
+}
