@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Greeting, GreetingType } from './lib/supabase';
 import { supabase } from './lib/supabase';
 import AudioRecorder from './components/AudioRecorder';
+import { GuestUploadScreen } from './components/GuestUploadScreen';
 
 // --- Types ---
 type AppGreeting = Greeting & { isOpened?: boolean; isRead?: boolean };
@@ -58,7 +59,8 @@ function GreetingCard({
   onDelete, 
   onEdit,
   onHeart,
-  onClose
+  onClose,
+  onApprove
 }: { 
   greeting: AppGreeting, 
   onOpen: () => void, 
@@ -67,7 +69,8 @@ function GreetingCard({
   onDelete: (id: string) => void,
   onEdit: (greeting: AppGreeting) => void,
   onHeart: (id: string) => void,
-  onClose: () => void
+  onClose: () => void,
+  onApprove: (id: string) => void
 }) {
   // Privacy check
   const isMom = currentUser === 'אמא';
@@ -165,6 +168,15 @@ function GreetingCard({
           >
             <Edit2 className="w-4 h-4" />
           </button>
+          {isSuperAdmin && greeting.is_approved === false && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onApprove(greeting.id); }}
+              className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-colors"
+              title="אשר ברכה זו"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            </button>
+          )}
           <button 
             onClick={(e) => { e.stopPropagation(); onDelete(greeting.id); }}
             className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors"
@@ -239,6 +251,10 @@ export default function App() {
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [nameInput, setNameInput] = useState('');
+  
+  // Guest Mode
+  const isGuestMode = new URLSearchParams(window.location.search).has('guest');
+  const guestNameParam = new URLSearchParams(window.location.search).get('name') || null;
   
   const [greetings, setGreetings] = useState<AppGreeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -569,6 +585,38 @@ export default function App() {
     }
   };
 
+  const handleApprove = async (id: string) => {
+    if (userName !== 'אילה') return;
+    
+    const toastId = toast.loading('מאשר ברכה...');
+    try {
+      const { error } = await supabase
+        .from('greetings')
+        .update({ is_approved: true })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('הברכה אושרה והתווספה ללוח!', { id: toastId });
+      
+      const greeting = greetings.find(g => g.id === id);
+      
+      // Notify Mom!
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sender: greeting?.sender || 'אורח', title: 'ברכה חדשה אושרה!' })
+        });
+      } catch (e) {
+        console.error('Failed to trigger push notification', e);
+      }
+      
+    } catch (error: any) {
+      console.error(error);
+      toast.error('שגיאה באישור הברכה', { id: toastId });
+    }
+  };
+
   const handleHeart = async (id: string) => {
     if (userName !== 'אמא') return;
     
@@ -694,7 +742,8 @@ export default function App() {
       const { error } = await supabase.from('push_subscriptions').upsert({
         endpoint: subData.endpoint,
         p256dh: subData.keys.p256dh,
-        auth: subData.keys.auth
+        auth: subData.keys.auth,
+        user_name: userName
       }, { onConflict: 'endpoint' });
 
       if (error) {
@@ -743,6 +792,16 @@ export default function App() {
           />
         </motion.div>
       </AnimatePresence>
+    );
+  }
+
+  // 0. Guest Mode Screen
+  if (isGuestMode) {
+    return (
+      <>
+        <GuestUploadScreen guestName={guestNameParam} />
+        <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
+      </>
     );
   }
 
@@ -892,11 +951,11 @@ export default function App() {
       <main className="relative z-10 flex-1 overflow-y-auto p-5 space-y-8 pb-32">
         {loading ? (
           <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
-        ) : greetings.length === 0 ? (
+        ) : greetings.filter(g => userName === 'אילה' || g.is_approved !== false).length === 0 ? (
           <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
         ) : (
           <AnimatePresence>
-            {greetings.map((greeting) => (
+            {greetings.filter(g => userName === 'אילה' || g.is_approved !== false).map((greeting) => (
               <GreetingCard 
                 key={greeting.id} 
                 greeting={greeting} 
@@ -907,6 +966,7 @@ export default function App() {
                 onEdit={handleEdit}
                 onHeart={handleHeart}
                 onClose={() => handleClose(greeting.id)}
+                onApprove={handleApprove}
               />
             ))}
           </AnimatePresence>

@@ -22,4 +22,5 @@ export interface Greeting {
   is_private: boolean;
   uploaded_by?: string;
   liked_by_mom?: boolean;
+  is_approved?: boolean;
 }
