@@ -17,6 +17,7 @@ export interface Greeting {
   type: GreetingType;
   content: string;
   media_url?: string;
+  media_attachments?: { url: string, type: 'image' | 'video' }[];
   created_at: string;
   scheduled_for?: string | null;
   is_private: boolean;

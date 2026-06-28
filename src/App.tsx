@@ -269,6 +269,7 @@ export default function App() {
   const [uploadErrorMsg, setUploadErrorMsg] = useState<string | null>(null);
   const [editingGreetingId, setEditingGreetingId] = useState<string | null>(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState<string | null>(null);
+  const [existingMediaAttachments, setExistingMediaAttachments] = useState<{url: string, type: 'image'|'video'}[]>([]);
   const [isJournalUpload, setIsJournalUpload] = useState(false);
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('boarding');
   
@@ -276,6 +277,7 @@ export default function App() {
   const [type, setType] = useState<GreetingType>('text');
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | Blob | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [isPrivate, setIsPrivate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -532,7 +534,15 @@ localStorage.setItem('birthday_is_superadmin', 'false');
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+      if (isJournalUpload) {
+        // limit to 10 files
+        const selectedFiles = Array.from(e.target.files).slice(0, 10);
+        setFiles(selectedFiles);
+        setFile(selectedFiles[0]);
+      } else {
+        setFile(e.target.files[0]);
+        setFiles([e.target.files[0]]);
+      }
     }
   };
 
@@ -542,12 +552,12 @@ localStorage.setItem('birthday_is_superadmin', 'false');
     const isTraveler = userName === 'אמא' || userName === 'אבא';
     if (!userName || (!isAdmin && !isTraveler)) return;
     
-    if (!senderInput.trim()) {
-      setUploadErrorMsg('חובה להזין את שם השולח');
+    if (!senderInput.trim() || (!content.trim() && !file && files.length === 0 && !existingMediaUrl && existingMediaAttachments.length === 0)) {
+      setUploadErrorMsg('אנא מלאו את כל השדות החובה');
       return;
     }
 
-    if (type !== 'text' && !file && !existingMediaUrl) {
+    if (type !== 'text' && !file && files.length === 0 && !existingMediaUrl && existingMediaAttachments.length === 0) {
       setUploadErrorMsg('חובה להוסיף קובץ מדיה');
       return;
     }
@@ -557,32 +567,37 @@ localStorage.setItem('birthday_is_superadmin', 'false');
 
     try {
       let media_url = existingMediaUrl; // Keep old media URL by default
+      let media_attachments = [...existingMediaAttachments]; // Keep old attachments
 
-      // Extract old filename if we need to delete it
       const oldFilename = existingMediaUrl ? existingMediaUrl.split('/').pop() : null;
 
-      if (file && type !== 'text') {
-        // Upload new file
+      if (isJournalUpload && files.length > 0) {
+        // Upload multiple files for journal
+        const newAttachments = await Promise.all(files.map(async (f: File) => {
+          const fileExt = f.name.split('.').pop() || 'jpg';
+          const fileName = `${uuidv4()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, f);
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage.from('greetings_media').getPublicUrl(fileName);
+          const fType = f.type.startsWith('video/') ? 'video' : 'image';
+          return { url: publicUrl, type: fType as 'image'|'video' };
+        }));
+        
+        // If they chose new files, overwrite the gallery
+        media_attachments = newAttachments;
+        media_url = newAttachments[0]?.url || null; // first item as fallback
+      } else if (!isJournalUpload && file && type !== 'text') {
+        // Upload single file for greetings
         const fileExt = file instanceof File ? file.name.split('.').pop() : 'webm';
         const fileName = `${uuidv4()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('greetings_media')
-          .upload(fileName, file);
-
+        const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, file);
         if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('greetings_media')
-          .getPublicUrl(fileName);
-          
+        const { data: { publicUrl } } = supabase.storage.from('greetings_media').getPublicUrl(fileName);
         media_url = publicUrl;
-
-        // Delete old file if existed
         if (oldFilename) {
           await supabase.storage.from('greetings_media').remove([oldFilename]);
         }
-      } else if (type === 'text') {
+      } else if (type === 'text' && !isJournalUpload) {
         // If type changed to text, remove any old file
         media_url = null;
         if (oldFilename) {
@@ -599,6 +614,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
             type,
             content,
             media_url,
+            media_attachments,
             is_private: isPrivate
           })
           .eq('id', editingGreetingId);
@@ -612,6 +628,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
           type,
           content: content.trim(),
           media_url: media_url,
+          media_attachments: media_attachments,
           is_private: isPrivate,
           uploaded_by: userName,
           is_approved: isSuperAdmin ? true : false,
@@ -759,6 +776,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
     setContent(greeting.content);
     setIsPrivate(greeting.is_private);
     setExistingMediaUrl(greeting.media_url || null);
+    setExistingMediaAttachments(greeting.media_attachments || []);
     setIsJournalUpload(greeting.is_journal_entry || false);
     
     setShowUploadModal(true);
@@ -769,9 +787,11 @@ localStorage.setItem('birthday_is_superadmin', 'false');
     setType('text');
     setContent('');
     setFile(null);
+    setFiles([]);
     setIsPrivate(false);
     setEditingGreetingId(null);
     setExistingMediaUrl(null);
+    setExistingMediaAttachments([]);
     setIsJournalUpload(false);
     setUploadErrorMsg(null);
   }
@@ -1045,11 +1065,13 @@ localStorage.setItem('birthday_is_superadmin', 'false');
             isTraveler={userName === 'אמא' || userName === 'אבא'} 
             onUploadClick={() => {
               setFile(null);
+              setFiles([]);
               setContent('');
               setType('image');
               setIsPrivate(false);
               setEditingGreetingId(null);
               setExistingMediaUrl(null);
+              setExistingMediaAttachments([]);
               setSenderInput(userName || '');
               setIsJournalUpload(true);
               setUploadErrorMsg(null);
@@ -1196,62 +1218,89 @@ localStorage.setItem('birthday_is_superadmin', 'false');
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">סוג המדיה</label>
-                <div className="flex gap-2 p-1 bg-gray-50 rounded-xl border border-gray-200">
-                  {(['text', 'image', 'video', 'audio'] as GreetingType[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => { setType(t); setFile(null); }}
-                      className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors ${type === t ? 'bg-white shadow-sm text-primary font-medium' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                      {t === 'text' && <FileText className="w-4 h-4" />}
-                      {t === 'image' && <ImageIcon className="w-4 h-4" />}
-                      {t === 'video' && <Video className="w-4 h-4" />}
-                      {t === 'audio' && <Mic className="w-4 h-4" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                {!isJournalUpload && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">סוג המדיה</label>
+                    <div className="flex gap-2 p-1 bg-gray-50 rounded-xl border border-gray-200">
+                      {(['text', 'image', 'video', 'audio'] as GreetingType[]).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => { setType(t); setFile(null); setFiles([]); }}
+                          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors ${type === t ? 'bg-white shadow-sm text-primary font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                          {t === 'text' && <FileText className="w-4 h-4" />}
+                          {t === 'image' && <ImageIcon className="w-4 h-4" />}
+                          {t === 'video' && <Video className="w-4 h-4" />}
+                          {t === 'audio' && <Mic className="w-4 h-4" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-              {type !== 'text' && (
-                <div className="p-5 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                  {existingMediaUrl && !file && (
-                     <div className="mb-4 p-3 bg-blue-50 text-blue-700 text-sm rounded-lg flex justify-between items-center">
-                       <span>כבר קיים קובץ לברכה זו. העלאה חדשה תחליף אותו.</span>
-                     </div>
-                  )}
-                  {type === 'audio' ? (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4 text-center">הקליטו הודעה קולית</label>
-                      <AudioRecorder 
-                        onRecordingComplete={(blob) => setFile(blob)} 
-                        onClear={() => setFile(null)} 
-                      />
-                      <input 
-                        type="file" 
-                        accept="audio/*"
-                        ref={fileInputRef}
-                        onChange={handleFileSelect}
-                        className="mt-6 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary"
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        בחירת קובץ ({type === 'image' ? 'תמונה' : 'סרטון'})
-                      </label>
-                      <input 
-                        type="file" 
-                        accept={type === 'image' ? 'image/*' : 'video/*'}
-                        ref={fileInputRef}
-                        onChange={handleFileSelect}
-                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+                {(type !== 'text' || isJournalUpload) && (
+                  <div className="p-5 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                    {existingMediaUrl && !file && !isJournalUpload && (
+                       <div className="mb-4 p-3 bg-blue-50 text-blue-700 text-sm rounded-lg flex justify-between items-center">
+                         <span>כבר קיים קובץ לברכה זו. העלאה חדשה תחליף אותו.</span>
+                       </div>
+                    )}
+                    
+                    {isJournalUpload && existingMediaAttachments.length > 0 && files.length === 0 && (
+                       <div className="mb-4 p-3 bg-blue-50 text-blue-700 text-sm rounded-lg flex justify-between items-center">
+                         <span>יש {existingMediaAttachments.length} פריטי מדיה בחוויה זו. בחירת קבצים חדשים תחליף אותם.</span>
+                       </div>
+                    )}
+
+                    {type === 'audio' && !isJournalUpload ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-4 text-center">הקליטו הודעה קולית</label>
+                        <AudioRecorder 
+                          onRecordingComplete={(blob) => setFile(blob)} 
+                          onClear={() => setFile(null)} 
+                        />
+                        <input 
+                          type="file" 
+                          accept="audio/*"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          className="mt-6 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {isJournalUpload ? 'בחירת תמונות/סרטונים (אפשר לסמן כמה עד 10)' : `בחירת קובץ (${type === 'image' ? 'תמונה' : 'סרטון'})`}
+                        </label>
+                        
+                        {isJournalUpload && files.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {files.map((f: File, i: number) => (
+                              <div key={i} className="relative w-16 h-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200 shadow-sm">
+                                {f.type.startsWith('image/') ? (
+                                  <img src={URL.createObjectURL(f)} alt={`preview-${i}`} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-xs text-gray-500 font-bold bg-gray-200 w-full h-full flex items-center justify-center">וידאו</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <input 
+                          type="file" 
+                          accept={isJournalUpload ? "image/*,video/*" : type === 'image' ? "image/*" : "video/*"}
+                          multiple={isJournalUpload}
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{isJournalUpload ? 'טקסט התיאור' : 'טקסט הברכה'} {type !== 'text' && '(אופציונלי)'}</label>

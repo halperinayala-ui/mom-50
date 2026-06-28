@@ -5,6 +5,62 @@ import { supabase } from '../lib/supabase';
 import type { Greeting, Comment } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 
+function MediaGallery({ attachments, fallbackUrl, fallbackType }: { 
+  attachments?: { url: string, type: 'image' | 'video' }[], 
+  fallbackUrl?: string, 
+  fallbackType: 'image' | 'video' | 'audio' | 'text' 
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  let items: { url: string, type: 'image' | 'video' }[] = [];
+  if (attachments && attachments.length > 0) {
+    items = attachments;
+  } else if (fallbackUrl && (fallbackType === 'image' || fallbackType === 'video')) {
+    items = [{ url: fallbackUrl, type: fallbackType }];
+  }
+
+  if (items.length === 0) return null;
+
+  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
+  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+
+  return (
+    <div className="relative w-full bg-black/5 flex items-center justify-center group overflow-hidden">
+      {items[currentIndex].type === 'video' ? (
+        <video src={items[currentIndex].url} controls className="max-h-[70vh] w-full object-contain" />
+      ) : (
+        <img src={items[currentIndex].url} alt={`media-${currentIndex}`} className="max-h-[70vh] w-full object-contain" />
+      )}
+
+      {items.length > 1 && (
+        <>
+          <button 
+            onClick={prevSlide}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button 
+            onClick={nextSlide}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/20 px-2 py-1 rounded-full">
+            {items.map((_, i) => (
+              <div 
+                key={i} 
+                className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentIndex ? 'bg-white scale-125' : 'bg-white/50'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function JournalScreen({ 
   greetings, 
   currentUser, 
@@ -158,14 +214,35 @@ function JournalEntryCard({
   };
 
   const handleDeleteComment = async (id: string) => {
-    if (window.confirm('למחוק את התגובה?')) {
-      const { error } = await supabase.from('comments').delete().eq('id', id);
-      if (error) {
-        toast.error('שגיאה במחיקת התגובה');
-      } else {
-        fetchComments();
-      }
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-4 text-center">
+        <p className="font-semibold text-gray-800">האם את/ה בטוח/ה שברצונך למחוק תגובה זו?</p>
+        <div className="flex gap-2 justify-center">
+          <button 
+            className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-red-600 transition-colors"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              setTimeout(async () => {
+                const { error } = await supabase.from('comments').delete().eq('id', id);
+                if (error) {
+                  toast.error('שגיאה במחיקת התגובה');
+                } else {
+                  fetchComments();
+                }
+              }, 100);
+            }}
+          >
+            כן, למחוק
+          </button>
+          <button 
+            className="bg-gray-200 text-gray-800 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-gray-300 transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            ביטול
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity, id: 'del-comment' });
   };
 
   const handleLike = async () => {
@@ -245,16 +322,12 @@ function JournalEntryCard({
         <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{entry.content}</p>
       </div>
 
-      {/* Media */}
-      {entry.media_url && (
-        <div className="w-full bg-gray-100 max-h-[500px] overflow-hidden flex items-center justify-center">
-          {entry.type === 'video' ? (
-            <video src={entry.media_url} controls className="max-h-[500px] w-full object-contain" />
-          ) : (
-            <img src={entry.media_url} alt="Journal" className="max-h-[500px] w-full object-contain" />
-          )}
-        </div>
-      )}
+      {/* Media Gallery */}
+      <MediaGallery 
+        attachments={entry.media_attachments} 
+        fallbackUrl={entry.media_url} 
+        fallbackType={entry.type} 
+      />
 
       {/* Actions */}
       <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-6">
@@ -303,7 +376,7 @@ function JournalEntryCard({
                         <span className="text-gray-700">{c.content}</span>
                       </div>
                       {c.author === currentUser && (
-                        <div className="flex flex-col gap-2 mr-3">
+                        <div className="flex flex-row gap-1.5 mr-3 shrink-0 self-center">
                           <button 
                             onClick={() => {
                               setEditingCommentId(c.id);
