@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Upload, Sparkles, AlertCircle } from 'lucide-react';
+import { Send, Upload, Sparkles, AlertCircle, Mic } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
+import AudioRecorder from './AudioRecorder';
 
 interface GuestUploadScreenProps {
   guestName: string | null;
@@ -11,9 +12,9 @@ interface GuestUploadScreenProps {
 
 export function GuestUploadScreen({ guestName }: GuestUploadScreenProps) {
   const [senderInput, setSenderInput] = useState(guestName || '');
-  const [type, setType] = useState<'video' | 'text' | 'image'>('video');
+  const [type, setType] = useState<'video' | 'text' | 'image' | 'audio'>('video');
   const [content, setContent] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | Blob | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,18 +43,18 @@ export function GuestUploadScreen({ guestName }: GuestUploadScreenProps) {
     try {
       let mediaUrl = '';
       if (file) {
-        const fileExt = file.name.split('.').pop();
+        const fileExt = file instanceof File ? file.name.split('.').pop() : 'webm';
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
         
         const { error: uploadError } = await supabase.storage
-          .from('greetings')
+          .from('greetings_media')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
-          .from('greetings')
+          .from('greetings_media')
           .getPublicUrl(filePath);
 
         mediaUrl = publicUrl;
@@ -173,35 +174,60 @@ export function GuestUploadScreen({ guestName }: GuestUploadScreenProps) {
               >
                 טקסט בלבד
               </button>
+              <button
+                type="button"
+                onClick={() => setType('audio')}
+                className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${type === 'audio' ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                אודיו
+              </button>
             </div>
           </div>
 
           {type !== 'text' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">קובץ מצורף</label>
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#D4AF37]/50 rounded-xl p-6 text-center cursor-pointer hover:bg-yellow-50/30 transition-colors"
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  accept={type === 'video' ? "video/*" : "image/*"}
-                  className="hidden"
-                />
-                {file ? (
-                  <div className="text-primary font-medium flex items-center justify-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-green-500" />
-                    {file.name}
-                  </div>
-                ) : (
-                  <div className="text-gray-500 flex flex-col items-center">
-                    <Upload className="w-8 h-8 mb-2 text-[#D4AF37]" />
-                    <span>לחץ כאן לבחירת {type === 'video' ? 'סרטון' : 'תמונה'}</span>
-                  </div>
-                )}
-              </div>
+              
+              {type === 'audio' ? (
+                <div className="border-2 border-dashed border-[#D4AF37]/50 rounded-xl p-6 text-center">
+                  <label className="block text-sm font-medium text-gray-700 mb-4 text-center">הקליטו הודעה קולית</label>
+                  <AudioRecorder 
+                    onRecordingComplete={(blob) => setFile(blob)} 
+                    onClear={() => setFile(null)} 
+                  />
+                  <input 
+                    type="file" 
+                    accept="audio/*"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="mt-6 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary"
+                  />
+                </div>
+              ) : (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-[#D4AF37]/50 rounded-xl p-6 text-center cursor-pointer hover:bg-yellow-50/30 transition-colors"
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept={type === 'video' ? "video/*" : "image/*"}
+                    className="hidden"
+                  />
+                  {file && file instanceof File ? (
+                    <div className="text-primary font-medium flex items-center justify-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-green-500" />
+                      {file.name}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 flex flex-col items-center">
+                      <Upload className="w-8 h-8 mb-2 text-[#D4AF37]" />
+                      <span>לחץ כאן לבחירת {type === 'video' ? 'סרטון' : 'תמונה'}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -227,15 +253,11 @@ export function GuestUploadScreen({ guestName }: GuestUploadScreenProps) {
               <span className="animate-pulse">מעלה...</span>
             ) : (
               <>
-                <span>שליחת הברכה לאמא</span>
+                <span>שליחת הברכה ללוח</span>
                 <Send className="w-5 h-5" />
               </>
             )}
           </button>
-          
-          <div className="text-center text-xs text-gray-400 mt-4">
-             הברכה תעבור לאישור לפני שתעלה ללוח
-          </div>
         </form>
       </div>
     </div>
