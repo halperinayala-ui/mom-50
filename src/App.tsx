@@ -198,6 +198,11 @@ export default function App() {
   const [scheduledTime, setScheduledTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check for saved name on load
@@ -209,6 +214,25 @@ export default function App() {
       setIsAdmin(savedIsAdmin);
       setSenderInput(savedName);
     }
+  }, []);
+
+  const fetchGreetings = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('greetings')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching greetings:', error);
+    } else if (data) {
+      const now = new Date();
+      const visibleGreetings = data.filter(g => !g.scheduled_for || new Date(g.scheduled_for) <= now);
+      setGreetings(prev => visibleGreetings.map(g => {
+        const existing = prev.find(p => p.id === g.id);
+        return { ...g, isOpened: existing?.isOpened || false };
+      }));
+    }
+    setLoading(false);
   }, []);
 
   const handleNameSubmit = (e: React.FormEvent) => {
@@ -231,6 +255,39 @@ export default function App() {
     }
   };
 
+  // PWA Install Logic & Scheduled Refresh
+  useEffect(() => {
+    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIosDevice);
+
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    
+    // Auto refresh every minute to show newly active scheduled greetings
+    const interval = setInterval(() => {
+      if (userName) fetchGreetings();
+    }, 60000);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      clearInterval(interval);
+    };
+  }, [userName, fetchGreetings]);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setShowInstallBanner(false);
+      }
+    }
+  };
+
   const handleLogout = () => {
     setUserName(null);
     setIsAdmin(false);
@@ -242,21 +299,6 @@ export default function App() {
   useEffect(() => {
     if (!userName) return;
 
-    async function fetchGreetings() {
-      const { data, error } = await supabase
-        .from('greetings')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (error) {
-        console.error('Error fetching greetings:', error);
-      } else if (data) {
-        const now = new Date();
-        const visibleGreetings = data.filter(g => !g.scheduled_for || new Date(g.scheduled_for) <= now);
-        setGreetings(visibleGreetings.map(g => ({ ...g, isOpened: false })));
-      }
-      setLoading(false);
-    }
     fetchGreetings();
 
     const channel = supabase
@@ -280,7 +322,7 @@ export default function App() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userName]);
+  }, [userName, fetchGreetings]);
 
   const handleOpen = (id: string) => {
     setGreetings(prev => prev.map(g => g.id === id ? { ...g, isOpened: true } : g));
@@ -543,7 +585,7 @@ export default function App() {
               required
             />
             <button type="submit" className="w-full bg-gradient-to-r from-[#800000] to-[#5a0000] text-white py-3 rounded-xl font-medium hover:shadow-lg transition-all">
-              היכנס לאפליקציה
+              כניסה
             </button>
           </form>
         </motion.div>
@@ -603,6 +645,35 @@ export default function App() {
         </div>
       </main>
       
+      {/* PWA Install Banner */}
+      {showInstallBanner && (deferredPrompt || isIOS) && (
+        <motion.div 
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          className="fixed bottom-0 left-0 right-0 bg-[#FDFBF7] border-t border-[#D4AF37]/30 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-40 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <img src="/icon-192.png" className="w-12 h-12 rounded-xl shadow-md" alt="App Icon" />
+            <div>
+              <h4 className="font-bold text-[#800000]">אמא 50</h4>
+              <p className="text-xs text-gray-600">התקינו את האפליקציה למסך הבית!</p>
+            </div>
+          </div>
+          {isIOS && !deferredPrompt ? (
+            <div className="text-[10px] leading-tight text-[#800000] font-medium bg-[#D4AF37]/10 px-2 py-1.5 rounded-lg max-w-[120px] text-center">
+              לחצו על השיתוף (מרובע עם חץ) ואז "הוסף למסך הבית"
+            </div>
+          ) : (
+            <button onClick={handleInstallClick} className="bg-[#800000] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:bg-[#5a0000] transition-colors">
+              התקנה
+            </button>
+          )}
+          <button onClick={() => setShowInstallBanner(false)} className="absolute top-1 left-1 p-1 text-gray-400 hover:text-gray-600">
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
+
       {/* Upload Button (Only for Admins) */}
       {isAdmin && userName !== 'אמא' && !showUploadModal && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
