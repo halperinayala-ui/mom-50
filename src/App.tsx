@@ -281,7 +281,6 @@ export default function App() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showStoryUploadModal, setShowStoryUploadModal] = useState(false);
   const [editingStoryEvent, setEditingStoryEvent] = useState<any>(null);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [uploadErrorMsg, setUploadErrorMsg] = useState<string | null>(null);
   const [editingGreetingId, setEditingGreetingId] = useState<string | null>(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState<string | null>(null);
@@ -1272,8 +1271,6 @@ export default function App() {
       <BottomNav 
         activeScreen={activeScreen} 
         onChange={setActiveScreen} 
-        isMom={userName === 'אמא'}
-        isAdmin={isAdmin}
         hasUnreadLifeStory={hasUnreadLifeStory}
       />
       

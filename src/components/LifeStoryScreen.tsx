@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import type { LifeStoryEvent } from '../lib/supabase';
-import { Plus, Image as ImageIcon, ChevronLeft, ChevronRight, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface Props {
@@ -48,7 +48,7 @@ export function LifeStoryScreen({ currentUser, isStoryAdmin, onAddClick, onEditC
     
     const subscription = supabase
       .channel('life_story_events')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'life_story_events' }, payload => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'life_story_events' }, () => {
         fetchEvents();
       })
       .subscribe();
@@ -265,7 +265,7 @@ export function LifeStoryScreen({ currentUser, isStoryAdmin, onAddClick, onEditC
                            {event.media_attachments && event.media_attachments.length > 0 && (
                              <div className="relative -mx-5 group/gallery bg-gray-50 py-4 border-t border-gray-100 overflow-hidden">
                                <div id={`gallery-${event.id}`} className="flex overflow-x-auto pb-2 snap-x snap-mandatory hide-scrollbar scroll-smooth items-center w-full">
-                                 {event.media_attachments.map((media, mIdx) => (
+                                 {event.media_attachments.map((media: any, mIdx: number) => (
                                    <div key={mIdx} className="w-full flex-shrink-0 snap-center px-5">
                                      <div className="bg-white p-2 pb-6 shadow-md border border-gray-200 rounded-sm transform rotate-1 hover:rotate-0 transition-transform cursor-pointer relative group/img max-w-full mx-auto">
                                        {media.type === 'image' ? (

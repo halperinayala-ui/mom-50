@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, Image as ImageIcon, CheckCircle, Save } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { X, Upload, Image as ImageIcon, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { LifeStoryEvent } from '../lib/supabase';
 import { toast } from 'react-hot-toast';

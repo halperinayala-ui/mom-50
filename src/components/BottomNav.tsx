@@ -5,14 +5,10 @@ export type ActiveScreen = 'boarding' | 'greetings' | 'journal' | 'lifestory';
 export function BottomNav({ 
   activeScreen, 
   onChange,
-  isMom,
-  isAdmin,
   hasUnreadLifeStory
 }: { 
   activeScreen: ActiveScreen, 
   onChange: (screen: ActiveScreen) => void,
-  isMom?: boolean,
-  isAdmin?: boolean,
   hasUnreadLifeStory?: boolean
 }) {
   return (
