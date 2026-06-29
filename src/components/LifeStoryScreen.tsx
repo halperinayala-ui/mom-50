@@ -124,7 +124,8 @@ export function LifeStoryScreen({ currentUser, isStoryAdmin, onAddClick, onEditC
     try {
       const { error } = await supabase.from('life_story_events').delete().eq('id', id);
       if (error) throw error;
-      toast.success('הפרק נמחק!', { duration: 3000 });
+      const tId = toast.success('הפרק נמחק!', { duration: 3000 });
+      setTimeout(() => toast.dismiss(tId), 3000);
       setEvents(events.filter(e => e.id !== id));
     } catch (e) {
       toast.error('שגיאה במחיקה', { duration: 3000 });
@@ -137,15 +138,15 @@ export function LifeStoryScreen({ currentUser, isStoryAdmin, onAddClick, onEditC
         <p className="font-bold text-gray-800 text-right">האם את/ה בטוח/ה שברצונך למחוק פרק זה?</p>
         <div className="flex gap-2 justify-end">
           <button
-            onClick={() => toast.remove(t.id)}
+            onClick={() => toast.dismiss(t.id)}
             className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
           >
             ביטול
           </button>
           <button
             onClick={() => {
-              toast.remove(t.id);
-              handleDelete(id);
+              toast.dismiss(t.id);
+              setTimeout(() => handleDelete(id), 100);
             }}
             className="px-4 py-1.5 text-sm font-medium text-white bg-[#800000] rounded-md hover:bg-[#600000] transition-colors shadow-sm"
           >
