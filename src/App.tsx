@@ -26,6 +26,7 @@ function LockedGreetingCard({ greeting, currentUser, isAdmin, onDelete }: { gree
 
   return (
     <motion.article 
+      id={`card-${greeting.id}`}
       layoutId={`card-${greeting.id}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -96,6 +97,7 @@ function GreetingCard({
     if (!greeting.isRead) {
       return (
         <motion.div 
+          id={`card-${greeting.id}`}
           layoutId={`card-${greeting.id}`}
           onClick={onOpen}
           whileHover={{ scale: 1.02 }}
@@ -131,6 +133,7 @@ function GreetingCard({
     } else {
       return (
         <motion.div 
+          id={`card-${greeting.id}`}
           layoutId={`card-${greeting.id}`}
           onClick={onOpen}
           whileHover={{ scale: 1.01 }}
@@ -159,6 +162,7 @@ function GreetingCard({
 
   return (
     <motion.article 
+      id={`card-${greeting.id}`}
       layoutId={`card-${greeting.id}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -654,7 +658,7 @@ export default function App() {
         toast.success(isJournalUpload ? 'החוויה עודכנה בהצלחה!' : 'הברכה עודכנה בהצלחה!', { id: toastId });
       } else {
         // Submit to Supabase
-        const { error: insertError } = await supabase.from('greetings').insert({
+        const { data: newRow, error: insertError } = await supabase.from('greetings').insert({
           sender: senderInput.trim(),
           type,
           content: content.trim(),
@@ -664,7 +668,7 @@ export default function App() {
           uploaded_by: userName,
           is_approved: true,
           is_journal_entry: isJournalUpload
-        });
+        }).select('id').single();
 
         if (insertError) throw insertError;
         toast.success(isJournalUpload ? 'החוויה עלתה בהצלחה!' : 'הברכה עלתה בהצלחה!', { id: toastId });
@@ -677,7 +681,8 @@ export default function App() {
             body: JSON.stringify({ 
               sender: senderInput.trim(), 
               title: isJournalUpload ? 'יומן מסע אישי' : 'ברכה חדשה!',
-              body: isJournalUpload ? `${senderInput.trim()} העלה/תה חוויה חדשה למסע!` : `ברכה חדשה מ-${senderInput.trim()}`
+              body: isJournalUpload ? `${senderInput.trim()} העלה/תה חוויה חדשה למסע!` : `ברכה חדשה מ-${senderInput.trim()}`,
+              url: newRow?.id ? `/?tab=${isJournalUpload ? 'journal' : 'greetings'}&id=${isJournalUpload ? 'journal-' : 'card-'}${newRow.id}` : '/'
             })
           });
           if (!res.ok) {
@@ -828,6 +833,28 @@ export default function App() {
     setIsJournalUpload(false);
     setUploadErrorMsg(null);
   }
+
+  // Deep link scrolling
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id && !showSplash && !showParentsWelcome) {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (id.startsWith('card-')) {
+            const rawId = id.replace('card-', '');
+            handleOpen(rawId);
+          }
+          // Remove id from URL so we don't scroll again on every render
+          const url = new URL(window.location.href);
+          url.searchParams.delete('id');
+          window.history.replaceState({}, '', url);
+        }
+      }, 500);
+    }
+  }, [activeScreen, greetings.length, showSplash, showParentsWelcome]);
 
   // Check unread life story events
   useEffect(() => {
@@ -1087,7 +1114,9 @@ export default function App() {
     );
   }
 
-  // 3. Main Greetings View
+  const hasUnreadGreetings = userName ? greetings.some(g => !g.is_journal_entry && (!g.read_by || !g.read_by.includes(userName))) : false;
+  const hasUnreadJournal = userName ? greetings.some(g => g.is_journal_entry && (!g.viewed_by || !g.viewed_by.includes(userName))) : false;
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFBF7] font-sans relative overflow-x-hidden">
       <Toaster 
@@ -1272,6 +1301,8 @@ export default function App() {
         activeScreen={activeScreen} 
         onChange={setActiveScreen} 
         hasUnreadLifeStory={hasUnreadLifeStory}
+        hasUnreadGreetings={hasUnreadGreetings}
+        hasUnreadJournal={hasUnreadJournal}
       />
       
       {showStoryUploadModal && (

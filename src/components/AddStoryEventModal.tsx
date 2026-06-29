@@ -99,7 +99,7 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
         if (error) throw error;
         toast.success('הפרק עודכן בהצלחה!');
       } else {
-        const { error } = await supabase
+        const { data: newRow, error } = await supabase
           .from('life_story_events')
           .insert({
             title,
@@ -108,7 +108,9 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
             year_index: Number(yearIndex),
             media_attachments: mediaUrls,
             read_by: ['אברמי']
-          });
+          })
+          .select('id')
+          .single();
 
         if (error) throw error;
 
@@ -120,7 +122,7 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
             title: 'פרק חדש בסיפור חיים! 📖',
             body: `פרק חדש מחכה לך: "${title}"`,
             sender: 'מערכת',
-            url: '/?tab=lifestory'
+            url: `/?tab=lifestory&id=event-${newRow.id}`
           })
         }).catch(err => console.error('Error triggering push notification', err));
 

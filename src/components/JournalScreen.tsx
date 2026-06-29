@@ -109,6 +109,18 @@ export function JournalScreen({
 }) {
   const journalEntries = greetings.filter(g => g.is_journal_entry);
   
+  useEffect(() => {
+    if (!currentUser) return;
+    const unreadEntries = journalEntries.filter(g => !g.viewed_by || !g.viewed_by.includes(currentUser));
+    if (unreadEntries.length > 0) {
+      unreadEntries.forEach(async (entry) => {
+        const newViewedBy = [...(entry.viewed_by || []), currentUser];
+        // Update DB
+        await supabase.from('greetings').update({ viewed_by: newViewedBy }).eq('id', entry.id);
+      });
+    }
+  }, [journalEntries, currentUser]);
+  
   return (
     <div className="p-5 space-y-6 pb-32 max-w-lg mx-auto">
       
@@ -224,7 +236,8 @@ function JournalEntryCard({
         body: JSON.stringify({ 
           sender: currentUser, 
           title: 'תגובה חדשה ביומן המסע',
-          body: `${currentUser} הגיב/ה על החוויה של ${entry.sender}`
+          body: `${currentUser} הגיב/ה על החוויה של ${entry.sender}`,
+          url: `/?tab=journal&id=journal-${entry.id}`
         })
       }).catch(console.error);
     }
@@ -309,6 +322,7 @@ function JournalEntryCard({
 
   return (
     <motion.div 
+      id={`journal-${entry.id}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
