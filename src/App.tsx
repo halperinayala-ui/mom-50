@@ -260,6 +260,17 @@ export default function App() {
   const [isStoryAdmin, setIsStoryAdmin] = useState(false);
   const [nameInput, setNameInput] = useState('');
   
+  const [activeScreen, setActiveScreen] = useState<ActiveScreen>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab') as ActiveScreen;
+    if (tab === 'greetings' || tab === 'journal' || tab === 'lifestory' || tab === 'boarding') {
+      return tab;
+    }
+    return 'boarding';
+  });
+
+  const [hasUnreadLifeStory, setHasUnreadLifeStory] = useState(false);
+
   // Guest Mode
   const isGuestMode = new URLSearchParams(window.location.search).has('guest');
   const guestNameParam = new URLSearchParams(window.location.search).get('name') || null;
@@ -276,7 +287,6 @@ export default function App() {
   const [existingMediaUrl, setExistingMediaUrl] = useState<string | null>(null);
   const [existingMediaAttachments, setExistingMediaAttachments] = useState<{url: string, type: 'image'|'video'}[]>([]);
   const [isJournalUpload, setIsJournalUpload] = useState(false);
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>('boarding');
   
   const [senderInput, setSenderInput] = useState('');
   const [type, setType] = useState<GreetingType>('text');
@@ -820,6 +830,31 @@ export default function App() {
     setUploadErrorMsg(null);
   }
 
+  // Check unread life story events
+  useEffect(() => {
+    if (!userName) return;
+
+    const checkUnread = async () => {
+      const { data } = await supabase.from('life_story_events').select('id, read_by');
+      if (data) {
+        const hasUnread = data.some(event => !event.read_by || !event.read_by.includes(userName));
+        setHasUnreadLifeStory(hasUnread);
+      }
+    };
+
+    checkUnread();
+
+    const channel = supabase.channel('life_story_unread')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'life_story_events' }, () => {
+        checkUnread();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userName]);
+
   // Subscribe to push notifications
   const subscribeToPush = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -907,6 +942,16 @@ export default function App() {
         origin: { y: 0.3 },
         colors: ['#D4AF37', '#FFD700', '#FFFFFF', '#800000']
       });
+      
+      // Auto transition to main app after parents welcome
+      setTimeout(() => {
+        setShowParentsWelcome(false);
+        // Do not force 'greetings' if URL requested a specific tab
+        const params = new URLSearchParams(window.location.search);
+        if (!params.get('tab')) {
+          setActiveScreen('greetings');
+        }
+      }, 5000);
     }
   }, [showParentsWelcome]);
 
@@ -1224,7 +1269,13 @@ export default function App() {
         </AnimatePresence>
       </main>
       
-      <BottomNav activeScreen={activeScreen} onChange={setActiveScreen} />
+      <BottomNav 
+        activeScreen={activeScreen} 
+        onChange={setActiveScreen} 
+        isMom={userName === 'אמא'}
+        isAdmin={isAdmin}
+        hasUnreadLifeStory={hasUnreadLifeStory}
+      />
       
       {showStoryUploadModal && (
         <AddStoryEventModal

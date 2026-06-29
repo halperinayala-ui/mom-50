@@ -111,6 +111,19 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
           });
 
         if (error) throw error;
+
+        // Notify all users about the new chapter
+        fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            title: 'פרק חדש בסיפור חיים! 📖',
+            body: `פרק חדש מחכה לך: "${title}"`,
+            sender: 'מערכת',
+            url: '/?tab=lifestory'
+          })
+        }).catch(err => console.error('Error triggering push notification', err));
+
         toast.success('הפרק נוסף בהצלחה!');
       }
 

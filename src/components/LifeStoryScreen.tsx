@@ -183,11 +183,6 @@ export function LifeStoryScreen({ currentUser, isStoryAdmin, onAddClick, onEditC
       </div>
 
       <div className="relative z-10">
-        {events.length === 0 && (
-           <div className="text-center text-gray-400 mt-12 mb-8 bg-white/60 p-6 rounded-2xl border border-gray-200 shadow-sm relative z-10">
-             <p className="font-sans">עוד לא נוספו פרקים בסיפור החיים.</p>
-           </div>
-        )}
         <div className="space-y-16 mt-12">
           {combinedEvents.map((event, index) => {
             if (event.isDecadeMarker) {
