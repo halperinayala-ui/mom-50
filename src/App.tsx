@@ -859,6 +859,24 @@ localStorage.setItem('birthday_is_superadmin', 'false');
     }
   };
 
+  const unsubscribeFromPush = async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        const subData = JSON.parse(JSON.stringify(subscription));
+        await supabase.from('push_subscriptions').delete().eq('endpoint', subData.endpoint);
+        await subscription.unsubscribe();
+      }
+      setNotifPermission('default');
+      toast.success('ההתראות כובו. אפשר להפעיל מחדש.');
+    } catch (e) {
+      console.error(e);
+      toast.error('שגיאה בכיבוי התראות');
+    }
+  };
+
   useEffect(() => {
     if (showParentsWelcome) {
       confetti({
@@ -1035,10 +1053,10 @@ localStorage.setItem('birthday_is_superadmin', 'false');
       <header className="relative z-10 pt-10 pb-6 px-6 flex flex-col items-center bg-[#FDFBF7] border-b border-[#D4AF37]/20">
          <div className="absolute top-4 right-4 flex gap-3 items-center">
             {notifPermission === 'granted' ? (
-              <div className="p-2 bg-[#D4AF37]/20 text-[#800000] rounded-full shadow-sm flex items-center gap-1.5 px-3 border border-[#D4AF37]/30" title="התראות מופעלות">
+              <button onClick={unsubscribeFromPush} className="p-2 bg-[#D4AF37]/20 text-[#800000] rounded-full shadow-sm flex items-center gap-1.5 px-3 border border-[#D4AF37]/30 hover:bg-[#D4AF37]/30 transition-colors" title="לחצי לכיבוי התראות">
                 <Bell className="w-4 h-4 fill-current" />
                 <span className="text-xs font-bold">התראות פעילות</span>
-              </div>
+              </button>
             ) : (
               <button onClick={subscribeToPush} className="p-2 bg-gray-50 text-gray-500 rounded-full hover:bg-primary/10 hover:text-primary transition-colors shadow-sm" title="קבל התראות">
                 <Bell className="w-4 h-4" />
