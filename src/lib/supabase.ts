@@ -35,3 +35,14 @@ export interface Comment {
   content: string;
   created_at: string;
 }
+
+export interface LifeStoryEvent {
+  id: string;
+  title: string;
+  content: string;
+  hebrew_year: string;
+  year_index: number;
+  media_attachments?: { url: string, type: 'image' | 'video' }[];
+  read_by?: string[];
+  created_at: string;
+}

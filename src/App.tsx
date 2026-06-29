@@ -10,6 +10,8 @@ import AudioRecorder from './components/AudioRecorder';
 import { GuestUploadScreen } from './components/GuestUploadScreen';
 import { BoardingPassScreen } from './components/BoardingPassScreen';
 import { JournalScreen } from './components/JournalScreen';
+import { LifeStoryScreen } from './components/LifeStoryScreen';
+import { AddStoryEventModal } from './components/AddStoryEventModal';
 import { BottomNav } from './components/BottomNav';
 import type { ActiveScreen } from './components/BottomNav';
 
@@ -255,6 +257,7 @@ export default function App() {
   const [userName, setUserName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isStoryAdmin, setIsStoryAdmin] = useState(false);
   const [nameInput, setNameInput] = useState('');
   
   // Guest Mode
@@ -264,8 +267,10 @@ export default function App() {
   const [greetings, setGreetings] = useState<AppGreeting[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Upload Modal State
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showStoryUploadModal, setShowStoryUploadModal] = useState(false);
+  const [editingStoryEvent, setEditingStoryEvent] = useState<any>(null);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [uploadErrorMsg, setUploadErrorMsg] = useState<string | null>(null);
   const [editingGreetingId, setEditingGreetingId] = useState<string | null>(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState<string | null>(null);
@@ -304,6 +309,7 @@ export default function App() {
     const savedName = localStorage.getItem('birthday_user_name');
     const savedIsAdmin = localStorage.getItem('birthday_is_admin') === 'true';
     const savedIsSuperAdmin = localStorage.getItem('birthday_is_superadmin') === 'true';
+    const savedIsStoryAdmin = localStorage.getItem('birthday_is_storyadmin') === 'true';
     
     const urlParams = new URLSearchParams(window.location.search);
     const loginParam = urlParams.get('login');
@@ -311,6 +317,7 @@ export default function App() {
     let initialName = savedName;
     let initialIsAdmin = savedIsAdmin;
     let initialIsSuperAdmin = savedIsSuperAdmin;
+    let initialIsStoryAdmin = savedIsStoryAdmin;
     
     if (loginParam === 'mom') {
       initialName = 'אמא';
@@ -325,13 +332,14 @@ export default function App() {
       initialIsSuperAdmin = false;
       localStorage.setItem('birthday_user_name', 'אבא');
       localStorage.setItem('birthday_is_admin', 'true');
-localStorage.setItem('birthday_is_superadmin', 'false');
+      localStorage.setItem('birthday_is_superadmin', 'false');
     }
     
     if (initialName) {
       setUserName(initialName);
       setIsAdmin(initialIsAdmin);
       setIsSuperAdmin(initialIsSuperAdmin);
+      setIsStoryAdmin(initialIsStoryAdmin);
       setSenderInput(initialName);
       
     }
@@ -368,6 +376,7 @@ localStorage.setItem('birthday_is_superadmin', 'false');
       let finalName = nameInput.trim();
       let hasAdminRights = false;
       let hasSuperAdminRights = false;
+      let hasStoryAdminRights = false;
       
       // Pin check for Mom and Dad
       if (finalName === 'אמא' || finalName === 'אבא') {
@@ -379,10 +388,17 @@ localStorage.setItem('birthday_is_superadmin', 'false');
       }
       
       // Secret super admin login logic
-      if (finalName.toLowerCase().endsWith('ayala50')) {
+      if (finalName.toLowerCase().endsWith('ayala50') || finalName.toLowerCase().endsWith('ayala5050')) {
          hasAdminRights = true;
          hasSuperAdminRights = true;
-         finalName = finalName.slice(0, -7).trim() || 'אילה';
+         hasStoryAdminRights = true;
+         finalName = 'אילה';
+      }
+      // Secret story admin logic
+      else if (finalName.toLowerCase().endsWith('avremi5050')) {
+         hasAdminRights = true; // he can also upload greetings like mom50
+         hasStoryAdminRights = true;
+         finalName = 'אברמי';
       }
       // Secret admin login logic
       else if (finalName.toLowerCase().endsWith('mom50')) {
@@ -394,10 +410,12 @@ localStorage.setItem('birthday_is_superadmin', 'false');
       setUserName(finalName);
       setIsAdmin(hasAdminRights);
       setIsSuperAdmin(hasSuperAdminRights);
+      setIsStoryAdmin(hasStoryAdminRights);
       setSenderInput(finalName);
       localStorage.setItem('birthday_user_name', finalName);
       localStorage.setItem('birthday_is_admin', hasAdminRights.toString());
       localStorage.setItem('birthday_is_superadmin', hasSuperAdminRights.toString());
+      localStorage.setItem('birthday_is_storyadmin', hasStoryAdminRights.toString());
       
       if (finalName === 'אמא' || finalName === 'אבא') {
         setShowParentsWelcome(true);
@@ -467,8 +485,12 @@ localStorage.setItem('birthday_is_superadmin', 'false');
   const handleLogout = () => {
     setUserName(null);
     setIsAdmin(false);
+    setIsSuperAdmin(false);
+    setIsStoryAdmin(false);
     localStorage.removeItem('birthday_user_name');
     localStorage.removeItem('birthday_is_admin');
+    localStorage.removeItem('birthday_is_superadmin');
+    localStorage.removeItem('birthday_is_storyadmin');
   };
 
   // Fetch greetings
@@ -1074,89 +1096,149 @@ localStorage.setItem('birthday_is_superadmin', 'false');
       </header>
 
       <main className="relative z-10 flex-1 overflow-y-auto pb-24">
-        {activeScreen === 'boarding' && <BoardingPassScreen userName={userName} />}
-        
-        {activeScreen === 'journal' && (
-          <JournalScreen 
-            greetings={greetings} 
-            currentUser={userName} 
-            isTraveler={userName === 'אמא' || userName === 'אבא'} 
-            onUploadClick={() => {
-              setFile(null);
-              setFiles([]);
-              setContent('');
-              setType('image');
-              setIsPrivate(false);
-              setEditingGreetingId(null);
-              setExistingMediaUrl(null);
-              setExistingMediaAttachments([]);
-              setSenderInput(userName || '');
-              setIsJournalUpload(true);
-              setUploadErrorMsg(null);
-              setShowUploadModal(true);
-            }} 
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {activeScreen === 'boarding' && (
+            <motion.div
+              key="boarding"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <BoardingPassScreen userName={userName} />
+            </motion.div>
+          )}
+          
+          {activeScreen === 'journal' && (
+            <motion.div
+              key="journal"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <JournalScreen 
+                greetings={greetings} 
+                currentUser={userName} 
+                isTraveler={userName === 'אמא' || userName === 'אבא'} 
+                onUploadClick={() => {
+                  setFile(null);
+                  setFiles([]);
+                  setContent('');
+                  setType('image');
+                  setIsPrivate(false);
+                  setEditingGreetingId(null);
+                  setExistingMediaUrl(null);
+                  setExistingMediaAttachments([]);
+                  setSenderInput(userName || '');
+                  setIsJournalUpload(true);
+                  setUploadErrorMsg(null);
+                  setShowUploadModal(true);
+                }} 
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </motion.div>
+          )}
 
-        {activeScreen === 'greetings' && (
-          <div className="p-5 space-y-8">
-            {loading ? (
-              <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
-            ) : greetings.filter(g => !g.is_journal_entry && (isSuperAdmin || (g.is_approved !== false))).length === 0 ? (
-              <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
-            ) : (
-              <AnimatePresence>
-                {greetings.filter(g => !g.is_journal_entry && (isSuperAdmin || (g.is_approved !== false))).map((greeting) => (
-                  <GreetingCard 
-                    key={greeting.id} 
-                    greeting={greeting} 
-                    onOpen={() => handleOpen(greeting.id)} 
-                    currentUser={userName || ''} 
-                    isAdmin={isAdmin}
-                    isSuperAdmin={isSuperAdmin}
-                    onDelete={handleDelete}
-                    onEdit={handleEdit}
-                    onHeart={handleHeart}
-                    onClose={() => handleClose(greeting.id)}
-                    onApprove={handleApprove}
-                  />
-                ))}
-              </AnimatePresence>
-            )}
-
-            <div className="text-center pt-8 pb-10 flex flex-col items-center">
-              <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent mb-6"></div>
-              <p className="text-sm text-[#a09e99] tracking-widest uppercase font-light mb-6">עוד הפתעות בדרך...</p>
-              
-              <button
-                onClick={async () => {
-                  const shareData = {
-                    title: 'חוגגים 50 לאמא!',
-                    text: 'הצטרפו אליי לאחל מזל טוב לאמא!',
-                    url: 'https://mom-50.vercel.app'
-                  };
-                  try {
-                    if (navigator.share) {
-                      await navigator.share(shareData);
-                    } else {
-                      await navigator.clipboard.writeText('https://mom-50.vercel.app');
-                      toast.success('הקישור הועתק, אפשר לשלוח בוואצפ!');
-                    }
-                  } catch (err) {}
+          {activeScreen === 'lifestory' && (
+            <motion.div
+              key="lifestory"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <LifeStoryScreen 
+                currentUser={userName}
+                isStoryAdmin={isStoryAdmin}
+                onAddClick={() => {
+                  setEditingStoryEvent(null);
+                  setShowStoryUploadModal(true);
                 }}
-                className="flex items-center justify-center gap-2 text-[#800000] font-bold bg-[#D4AF37]/10 py-3 px-6 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-colors shadow-sm"
-              >
-                <Share2 className="w-5 h-5" />
-                <span>שיתוף האפליקציה</span>
-              </button>
-            </div>
-          </div>
-        )}
+                onEditClick={(event) => {
+                  setEditingStoryEvent(event);
+                  setShowStoryUploadModal(true);
+                }}
+              />
+            </motion.div>
+          )}
+
+          {activeScreen === 'greetings' && !showUploadModal && (
+            <motion.div
+              key="greetings"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="p-5 space-y-8"
+            >
+              {loading ? (
+                <div className="text-center text-[#D4AF37] py-10">טוען הפתעות...</div>
+              ) : greetings.filter(g => !g.is_journal_entry && (isSuperAdmin || (g.is_approved !== false))).length === 0 ? (
+                <div className="text-center text-gray-400 py-10 font-light">עדיין אין ברכות. בקרוב...</div>
+              ) : (
+                <AnimatePresence>
+                  {greetings.filter(g => !g.is_journal_entry && (isSuperAdmin || (g.is_approved !== false))).map((greeting) => (
+                    <GreetingCard 
+                      key={greeting.id} 
+                      greeting={greeting} 
+                      onOpen={() => handleOpen(greeting.id)} 
+                      currentUser={userName || ''} 
+                      isAdmin={isAdmin}
+                      isSuperAdmin={isSuperAdmin}
+                      onDelete={handleDelete}
+                      onEdit={handleEdit}
+                      onHeart={handleHeart}
+                      onClose={() => handleClose(greeting.id)}
+                      onApprove={handleApprove}
+                    />
+                  ))}
+                </AnimatePresence>
+              )}
+
+              <div className="text-center pt-8 pb-10 flex flex-col items-center">
+                <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent mb-6"></div>
+                <p className="text-sm text-[#a09e99] tracking-widest uppercase font-light mb-6">עוד הפתעות בדרך...</p>
+                
+                <button
+                  onClick={async () => {
+                    const shareData = {
+                      title: 'חוגגים 50 לאמא!',
+                      text: 'הצטרפו אליי לאחל מזל טוב לאמא!',
+                      url: 'https://mom-50.vercel.app'
+                    };
+                    try {
+                      if (navigator.share) {
+                        await navigator.share(shareData);
+                      } else {
+                        await navigator.clipboard.writeText('https://mom-50.vercel.app');
+                        toast.success('הקישור הועתק, אפשר לשלוח בוואצפ!');
+                      }
+                    } catch (err) {}
+                  }}
+                  className="flex items-center justify-center gap-2 text-[#800000] font-bold bg-[#D4AF37]/10 py-3 px-6 rounded-full border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-colors shadow-sm"
+                >
+                  <Share2 className="w-5 h-5" />
+                  <span>שיתוף האפליקציה</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
       
       <BottomNav activeScreen={activeScreen} onChange={setActiveScreen} />
+      
+      {showStoryUploadModal && (
+        <AddStoryEventModal
+          initialEvent={editingStoryEvent}
+          onClose={() => {
+            setShowStoryUploadModal(false);
+            setEditingStoryEvent(null);
+          }}
+          onSuccess={() => {
+            setShowStoryUploadModal(false);
+            setEditingStoryEvent(null);
+          }}
+        />
+      )}
       
       {/* PWA Install Banner */}
       {showInstallBanner && (deferredPrompt || isIOS) && (

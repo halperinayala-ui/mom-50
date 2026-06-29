@@ -1,6 +1,6 @@
-import { Plane, Gift, BookOpen } from 'lucide-react';
+import { Plane, Gift, BookOpen, Film } from 'lucide-react';
 
-export type ActiveScreen = 'boarding' | 'greetings' | 'journal';
+export type ActiveScreen = 'boarding' | 'greetings' | 'journal' | 'lifestory';
 
 export function BottomNav({ 
   activeScreen, 
@@ -34,6 +34,14 @@ export function BottomNav({
         >
           <Gift className={`w-6 h-6 mb-1 ${activeScreen === 'greetings' ? 'fill-current opacity-20' : ''}`} />
           <span className="text-[10px] font-bold tracking-wider">ברכות</span>
+        </button>
+
+        <button 
+          onClick={() => onChange('lifestory')}
+          className={`flex flex-col items-center p-2 transition-colors ${activeScreen === 'lifestory' ? 'text-[#800000]' : 'text-gray-400 hover:text-[#D4AF37]'}`}
+        >
+          <Film className={`w-6 h-6 mb-1 ${activeScreen === 'lifestory' ? 'fill-current opacity-20' : ''}`} />
+          <span className="text-[10px] font-bold tracking-wider">סיפור חיים</span>
         </button>
       </div>
     </div>
