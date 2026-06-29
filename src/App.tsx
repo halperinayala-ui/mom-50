@@ -11,6 +11,11 @@ import { GuestUploadScreen } from './components/GuestUploadScreen';
 import { BoardingPassScreen } from './components/BoardingPassScreen';
 import { JournalScreen } from './components/JournalScreen';
 import { LifeStoryScreen } from './components/LifeStoryScreen';
+import { BirthdayScreen } from './components/BirthdayScreen';
+
+// --- FEATURE FLAGS ---
+// Toggle this to true to show the birthday screen instead of boarding pass
+const isBirthdayActive = false;
 import { AddStoryEventModal } from './components/AddStoryEventModal';
 import { BottomNav } from './components/BottomNav';
 import type { ActiveScreen } from './components/BottomNav';
@@ -1170,7 +1175,16 @@ export default function App() {
 
       <main className="relative z-10 flex-1 overflow-y-auto pb-24">
         <AnimatePresence mode="wait">
-          {activeScreen === 'boarding' && (
+          {activeScreen === 'boarding' && isBirthdayActive ? (
+            <motion.div
+              key="birthday"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <BirthdayScreen userName={userName} />
+            </motion.div>
+          ) : activeScreen === 'boarding' && (
             <motion.div
               key="boarding"
               initial={{ opacity: 0, x: -20 }}
@@ -1303,6 +1317,7 @@ export default function App() {
         hasUnreadLifeStory={hasUnreadLifeStory}
         hasUnreadGreetings={hasUnreadGreetings}
         hasUnreadJournal={hasUnreadJournal}
+        isBirthdayActive={isBirthdayActive}
       />
       
       {showStoryUploadModal && (

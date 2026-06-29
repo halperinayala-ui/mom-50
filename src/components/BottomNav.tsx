@@ -1,4 +1,4 @@
-import { Plane, Gift, BookOpen, Film } from 'lucide-react';
+import { Plane, Gift, BookOpen, Film, PartyPopper } from 'lucide-react';
 
 export type ActiveScreen = 'boarding' | 'greetings' | 'journal' | 'lifestory';
 
@@ -7,13 +7,15 @@ export function BottomNav({
   onChange,
   hasUnreadLifeStory,
   hasUnreadGreetings,
-  hasUnreadJournal
+  hasUnreadJournal,
+  isBirthdayActive
 }: { 
   activeScreen: ActiveScreen, 
   onChange: (screen: ActiveScreen) => void,
   hasUnreadLifeStory?: boolean,
   hasUnreadGreetings?: boolean,
-  hasUnreadJournal?: boolean
+  hasUnreadJournal?: boolean,
+  isBirthdayActive?: boolean
 }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[#FDFBF7] border-t border-[#D4AF37]/20 p-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50">
@@ -22,8 +24,12 @@ export function BottomNav({
           onClick={() => onChange('boarding')}
           className={`flex flex-col items-center p-2 transition-colors ${activeScreen === 'boarding' ? 'text-[#800000]' : 'text-gray-400 hover:text-[#D4AF37]'}`}
         >
-          <Plane className={`w-6 h-6 mb-1 ${activeScreen === 'boarding' ? 'fill-current opacity-20' : ''}`} />
-          <span className="text-[10px] font-bold tracking-wider">כרטיס טיסה</span>
+          {isBirthdayActive ? (
+            <PartyPopper className={`w-6 h-6 mb-1 ${activeScreen === 'boarding' ? 'fill-current opacity-20' : ''}`} />
+          ) : (
+            <Plane className={`w-6 h-6 mb-1 ${activeScreen === 'boarding' ? 'fill-current opacity-20' : ''}`} />
+          )}
+          <span className="text-[10px] font-bold tracking-wider">{isBirthdayActive ? '50!' : 'כרטיס טיסה'}</span>
         </button>
 
         <button 
