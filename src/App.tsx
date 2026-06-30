@@ -3,9 +3,9 @@ import { Gift, Video, Image as ImageIcon, Send, Lock, Mic, FileText, X, Trash2, 
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
-import { v4 as uuidv4 } from 'uuid';
 import type { Greeting, GreetingType } from './lib/supabase';
 import { supabase } from './lib/supabase';
+import { uploadToCloudinary } from './lib/cloudinary';
 import AudioRecorder from './components/AudioRecorder';
 import { GuestUploadScreen } from './components/GuestUploadScreen';
 import { BoardingPassScreen } from './components/BoardingPassScreen';
@@ -575,12 +575,12 @@ export default function App() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const MAX_SIZE = 30 * 1024 * 1024; // 30MB limit
+      const MAX_SIZE = 100 * 1024 * 1024; // 100MB limit
       const selectedFiles = Array.from(e.target.files);
       
       const oversizedFiles = selectedFiles.filter(f => f.size > MAX_SIZE);
       if (oversizedFiles.length > 0) {
-        toast.error('אחד או יותר מהסרטונים שוקל מעל 30MB. אנא בחרו סרטונים קצרים יותר (עד כ-20 שניות).');
+        toast.error('אחד הסרטונים שוקל מעל 100MB. אנא בחרו סרטונים קצרים יותר.');
         return;
       }
 
@@ -624,8 +624,6 @@ export default function App() {
       if (isJournalUpload && files.length > 0) {
         // Upload multiple files for journal
         const newAttachments = await Promise.all(files.map(async (f: File) => {
-          const fileExt = f.name.split('.').pop() || 'jpg';
-          const fileName = `${uuidv4()}.${fileExt}`;
           const fType = f.type.startsWith('video/') ? 'video' : 'image';
           
           let fileToUpload = f;
@@ -641,14 +639,12 @@ export default function App() {
             }
           }
 
-          const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, fileToUpload);
-          if (uploadError) {
-            if (uploadError.message.includes('maximum allowed size')) {
-              throw new Error('אחד הקבצים גדול מדי. אנא הגדילו את המגבלה ב-Supabase.');
-            }
-            throw uploadError;
+          let publicUrl = '';
+          try {
+            publicUrl = await uploadToCloudinary(fileToUpload);
+          } catch (error: any) {
+             throw new Error(error.message || 'שגיאה בהעלאת התמונה');
           }
-          const { data: { publicUrl } } = supabase.storage.from('greetings_media').getPublicUrl(fileName);
           return { url: publicUrl, type: fType as 'image'|'video' };
         }));
         
@@ -657,8 +653,6 @@ export default function App() {
         media_url = newAttachments[0]?.url || null; // first item as fallback
       } else if (!isJournalUpload && file && type !== 'text') {
         // Upload single file for greetings
-        const fileExt = file instanceof File ? file.name.split('.').pop() : 'webm';
-        const fileName = `${uuidv4()}.${fileExt}`;
         const fType = type === 'video' || (file instanceof File && file.type.startsWith('video/')) ? 'video' : 'image';
         
         let fileToUpload = file;
@@ -674,14 +668,13 @@ export default function App() {
           }
         }
 
-        const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, fileToUpload);
-        if (uploadError) {
-          if (uploadError.message.includes('maximum allowed size')) {
-            throw new Error('הסרטון גדול מדי. יש להגדיל את מגבלת הגודל (Maximum allowed file size) ב-Storage ב-Supabase.');
-          }
-          throw uploadError;
+        let publicUrl = '';
+        try {
+          publicUrl = await uploadToCloudinary(fileToUpload);
+        } catch (error: any) {
+           throw new Error(error.message || 'שגיאה בהעלאת הוידאו');
         }
-        const { data: { publicUrl } } = supabase.storage.from('greetings_media').getPublicUrl(fileName);
+        
         media_url = publicUrl;
         if (oldFilename) {
           await supabase.storage.from('greetings_media').remove([oldFilename]);

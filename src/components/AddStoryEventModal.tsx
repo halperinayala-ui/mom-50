@@ -2,10 +2,10 @@ import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Upload, Image as ImageIcon, Save } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
+import { uploadToCloudinary } from '../lib/cloudinary';
 import { supabase } from '../lib/supabase';
 import type { LifeStoryEvent } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
-import { v4 as uuidv4 } from 'uuid';
 
 const HEBREW_YEARS = [
   { year: 1976, label: 'תשל"ו (1976)' }, { year: 1977, label: 'תשל"ז (1977)' }, { year: 1978, label: 'תשל"ח (1978)' }, { year: 1979, label: 'תשל"ט (1979)' }, { year: 1980, label: 'תש"מ (1980)' },
@@ -39,12 +39,12 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const MAX_SIZE = 30 * 1024 * 1024; // 30MB limit
+      const MAX_SIZE = 100 * 1024 * 1024; // 100MB limit
       const selectedFiles = Array.from(e.target.files);
       
       const oversizedFiles = selectedFiles.filter(f => f.size > MAX_SIZE);
       if (oversizedFiles.length > 0) {
-        toast.error('אחד או יותר מהסרטונים שוקל מעל 30MB. אנא בחרו סרטונים קצרים יותר (עד כ-20 שניות).');
+        toast.error('אחד הסרטונים שוקל מעל 100MB. אנא בחרו סרטונים קצרים יותר.');
         return;
       }
 
@@ -57,9 +57,6 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
     
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `life_story/${fileName}`;
 
       let fileToUpload = file;
       if (!isVideo) {
@@ -74,20 +71,12 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
         }
       }
 
-      const { error: uploadError } = await supabase.storage
-        .from('greetings_media')
-        .upload(filePath, fileToUpload);
-
-      if (uploadError) {
-        if (uploadError.message.includes('maximum allowed size')) {
-          throw new Error('אחד הקבצים גדול מדי. אנא הגדילו את המגבלה (Maximum allowed file size) ב-Supabase.');
-        }
-        throw uploadError;
+      let publicUrl = '';
+      try {
+        publicUrl = await uploadToCloudinary(fileToUpload);
+      } catch (error: any) {
+        throw new Error(error.message || 'שגיאה בהעלאת המדיה');
       }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('greetings_media')
-        .getPublicUrl(filePath);
 
       uploadedUrls.push({ url: publicUrl, type: isVideo ? 'video' : 'image' });
     }
