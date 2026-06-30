@@ -30,3 +30,25 @@ export const uploadToCloudinary = async (file: File | Blob): Promise<string> => 
     throw new Error('אירעה שגיאה בהעלאת הקובץ לשרת המדיה. אנא נסו שוב.');
   }
 };
+
+/**
+ * Optimizes a Cloudinary URL by injecting automatic quality and format parameters.
+ * This can reduce file sizes by 80-90% without noticeable quality loss.
+ * If the URL is not from Cloudinary, it is returned as-is.
+ */
+export const optimizeCloudinaryUrl = (url: string | null | undefined): string | undefined => {
+  if (!url) return undefined;
+  
+  // Only optimize if it's a Cloudinary URL
+  if (!url.includes('res.cloudinary.com')) {
+    return url;
+  }
+
+  // If it already has optimization params, don't add them again
+  if (url.includes('/upload/q_auto') || url.includes('/upload/f_auto')) {
+    return url;
+  }
+
+  // Insert q_auto,f_auto after /upload/
+  return url.replace('/upload/', '/upload/q_auto,f_auto/');
+};

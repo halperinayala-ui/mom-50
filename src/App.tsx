@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import type { Greeting, GreetingType } from './lib/supabase';
 import { supabase } from './lib/supabase';
-import { uploadToCloudinary } from './lib/cloudinary';
+import { uploadToCloudinary, optimizeCloudinaryUrl } from './lib/cloudinary';
 import AudioRecorder from './components/AudioRecorder';
 import { GuestUploadScreen } from './components/GuestUploadScreen';
 import { BoardingPassScreen } from './components/BoardingPassScreen';
@@ -222,12 +222,12 @@ function GreetingCard({
       {greeting.media_url && (
         <div className="relative rounded-2xl overflow-hidden mb-5 shadow-sm">
           {greeting.type === 'video' ? (
-             <video src={greeting.media_url} controls className="w-full max-h-[70vh] object-contain bg-black/5" />
+             <video src={optimizeCloudinaryUrl(greeting.media_url)} controls className="w-full max-h-[70vh] object-contain bg-black/5" />
           ) : greeting.type === 'audio' ? (
-             <audio src={greeting.media_url} controls className="w-full mt-2" />
+             <audio src={optimizeCloudinaryUrl(greeting.media_url)} controls className="w-full mt-2" />
           ) : (
             <img 
-              src={greeting.media_url} 
+              src={optimizeCloudinaryUrl(greeting.media_url)} 
               alt="Greeting media" 
               className="w-full h-auto max-h-[70vh] object-contain rounded-xl bg-gray-50"
             />

@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Send, Camera } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import type { Greeting, Comment } from '../lib/supabase';
+import { optimizeCloudinaryUrl } from '../lib/cloudinary';
 import { HDate } from '@hebcal/core';
 
 function MediaGallery({ attachments, fallbackUrl, fallbackType }: { 
@@ -57,10 +58,18 @@ function MediaGallery({ attachments, fallbackUrl, fallbackType }: {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {items[currentIndex].type === 'video' ? (
-        <video src={items[currentIndex].url} controls className="max-h-[70vh] w-full object-contain" />
+      {items[currentIndex].type === 'video' || items[currentIndex].url.includes('.webm') || items[currentIndex].url.includes('.mp4') ? (
+        <video 
+          src={optimizeCloudinaryUrl(items[currentIndex].url)} 
+          controls 
+          className="w-full h-auto max-h-[60vh] object-contain"
+        />
       ) : (
-        <img src={items[currentIndex].url} alt={`media-${currentIndex}`} className="max-h-[70vh] w-full object-contain" />
+        <img 
+          src={optimizeCloudinaryUrl(items[currentIndex].url)} 
+          alt="Gallery item" 
+          className="w-full h-auto max-h-[60vh] object-contain"
+        />
       )}
 
       {items.length > 1 && (

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import type { LifeStoryEvent } from '../lib/supabase';
+import { optimizeCloudinaryUrl } from '../lib/cloudinary';
 import { Plus, ChevronLeft, ChevronRight, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -269,9 +270,9 @@ export function LifeStoryScreen({ currentUser, isStoryAdmin, onAddClick, onEditC
                                    <div key={mIdx} className="w-full flex-shrink-0 snap-center px-5">
                                      <div className="bg-white p-2 pb-6 shadow-md border border-gray-200 rounded-sm transform rotate-1 hover:rotate-0 transition-transform cursor-pointer relative group/img max-w-full mx-auto">
                                        {media.type === 'image' ? (
-                                         <img src={media.url} alt="זיכרון" className="max-h-80 w-full object-contain rounded-sm" />
+                                         <img src={optimizeCloudinaryUrl(media.url)} alt="זיכרון" className="max-h-80 w-full object-contain rounded-sm" />
                                        ) : (
-                                         <video src={media.url} className="max-h-80 w-full object-contain rounded-sm" controls />
+                                         <video src={optimizeCloudinaryUrl(media.url)} className="max-h-80 w-full object-contain rounded-sm" controls />
                                        )}
                                      </div>
                                    </div>
