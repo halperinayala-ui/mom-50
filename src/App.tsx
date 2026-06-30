@@ -575,14 +575,23 @@ export default function App() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      const MAX_SIZE = 30 * 1024 * 1024; // 30MB limit
+      const selectedFiles = Array.from(e.target.files);
+      
+      const oversizedFiles = selectedFiles.filter(f => f.size > MAX_SIZE);
+      if (oversizedFiles.length > 0) {
+        toast.error('אחד או יותר מהסרטונים שוקל מעל 30MB. אנא בחרו סרטונים קצרים יותר (עד כ-20 שניות).');
+        return;
+      }
+
       if (isJournalUpload) {
         // limit to 10 files
-        const selectedFiles = Array.from(e.target.files).slice(0, 10);
-        setFiles(selectedFiles);
-        setFile(selectedFiles[0]);
+        const slicedFiles = selectedFiles.slice(0, 10);
+        setFiles(slicedFiles);
+        setFile(slicedFiles[0]);
       } else {
-        setFile(e.target.files[0]);
-        setFiles([e.target.files[0]]);
+        setFile(selectedFiles[0]);
+        setFiles([selectedFiles[0]]);
       }
     }
   };

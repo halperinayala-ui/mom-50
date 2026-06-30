@@ -39,7 +39,16 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+      const MAX_SIZE = 30 * 1024 * 1024; // 30MB limit
+      const selectedFiles = Array.from(e.target.files);
+      
+      const oversizedFiles = selectedFiles.filter(f => f.size > MAX_SIZE);
+      if (oversizedFiles.length > 0) {
+        toast.error('אחד או יותר מהסרטונים שוקל מעל 30MB. אנא בחרו סרטונים קצרים יותר (עד כ-20 שניות).');
+        return;
+      }
+
+      setFiles(prev => [...prev, ...selectedFiles]);
     }
   };
 
