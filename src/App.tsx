@@ -413,6 +413,11 @@ export default function App() {
          hasStoryAdminRights = true;
          finalName = 'אילה';
       }
+      // Secret Shneor admin logic
+      else if (finalName.toLowerCase() === 'shneor50') {
+         hasAdminRights = true;
+         finalName = 'שניאור';
+      }
       // Secret story admin logic
       else if (finalName.toLowerCase().endsWith('avremi5050')) {
          hasAdminRights = true; // he can also upload greetings like mom50
@@ -1006,6 +1011,33 @@ export default function App() {
       toast.error('שגיאה בכיבוי התראות');
     }
   };
+  const handleRevealGift = async () => {
+    if (window.confirm('האם את/ה בטוח/ה שאת/ה רוצה לשחרר את הברכה עכשיו? זה יקפוץ אוטומטית במסך של ההורים!')) {
+      try {
+        await supabase.from('greetings').insert([{
+          sender: 'system',
+          type: 'text',
+          content: 'REVEAL_GIFT_50_MOM_SECRET_CODE',
+          is_private: true
+        }]);
+        toast.success('הברכה שוחררה בהצלחה!');
+      } catch (e) {
+        toast.error('שגיאה בשחרור הברכה');
+      }
+    }
+  };
+
+  const handleLockGift = async () => {
+    if (window.confirm('לנעול את הברכה בחזרה? (לצרכי בדיקה)')) {
+      try {
+        await supabase.from('greetings').delete().eq('content', 'REVEAL_GIFT_50_MOM_SECRET_CODE');
+        toast.success('הברכה ננעלה חזרה!');
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (e) {
+        toast.error('שגיאה בנעילה');
+      }
+    }
+  };
 
   useEffect(() => {
     if (showParentsWelcome) {
@@ -1208,6 +1240,28 @@ export default function App() {
               החלף משתמש ({userName})
            </button>
         </div>
+        
+        {isAdmin && (userName === 'אילה' || userName === 'שניאור') && (
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            <button
+              onClick={handleRevealGift}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-[#800000] text-white rounded-full text-xs font-bold shadow-lg shadow-red-600/30 hover:scale-105 transition-transform animate-pulse"
+            >
+              <Gift className="w-4 h-4" />
+              <span>שחרר את ברכת ההורים!</span>
+            </button>
+            
+            {/* כפתור למטרת טסטים - נועל חזרה את הברכה */}
+            <button
+              onClick={handleLockGift}
+              className="flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-[10px] font-bold opacity-50 hover:opacity-100 transition-opacity mx-auto"
+            >
+              <Lock className="w-3 h-3" />
+              <span>נעל חזרה (לבדיקות)</span>
+            </button>
+          </div>
+        )}
+        
         <img 
           src="/logo.png" 
           alt="50th Birthday Logo" 
