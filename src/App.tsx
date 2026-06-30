@@ -13,6 +13,7 @@ import { JournalScreen } from './components/JournalScreen';
 import { LifeStoryScreen } from './components/LifeStoryScreen';
 import { BirthdayScreen } from './components/BirthdayScreen';
 
+import imageCompression from 'browser-image-compression';
 // --- FEATURE FLAGS ---
 // Toggle this to true to show the birthday screen instead of boarding pass
 const isBirthdayActive = true;
@@ -616,7 +617,22 @@ export default function App() {
         const newAttachments = await Promise.all(files.map(async (f: File) => {
           const fileExt = f.name.split('.').pop() || 'jpg';
           const fileName = `${uuidv4()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, f);
+          const fType = f.type.startsWith('video/') ? 'video' : 'image';
+          
+          let fileToUpload = f;
+          if (fType === 'image') {
+            try {
+              fileToUpload = await imageCompression(f, {
+                maxSizeMB: 0.8,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+              });
+            } catch (e) {
+              console.error('Image compression failed', e);
+            }
+          }
+
+          const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, fileToUpload);
           if (uploadError) {
             if (uploadError.message.includes('maximum allowed size')) {
               throw new Error('אחד הקבצים גדול מדי. אנא הגדילו את המגבלה ב-Supabase.');
@@ -624,7 +640,6 @@ export default function App() {
             throw uploadError;
           }
           const { data: { publicUrl } } = supabase.storage.from('greetings_media').getPublicUrl(fileName);
-          const fType = f.type.startsWith('video/') ? 'video' : 'image';
           return { url: publicUrl, type: fType as 'image'|'video' };
         }));
         
@@ -635,7 +650,22 @@ export default function App() {
         // Upload single file for greetings
         const fileExt = file instanceof File ? file.name.split('.').pop() : 'webm';
         const fileName = `${uuidv4()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, file);
+        const fType = type === 'video' || (file instanceof File && file.type.startsWith('video/')) ? 'video' : 'image';
+        
+        let fileToUpload = file;
+        if (fType === 'image' && file instanceof File) {
+          try {
+            fileToUpload = await imageCompression(file, {
+              maxSizeMB: 0.8,
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+            });
+          } catch (e) {
+            console.error('Image compression failed', e);
+          }
+        }
+
+        const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, fileToUpload);
         if (uploadError) {
           if (uploadError.message.includes('maximum allowed size')) {
             throw new Error('הסרטון גדול מדי. יש להגדיל את מגבלת הגודל (Maximum allowed file size) ב-Storage ב-Supabase.');

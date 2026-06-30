@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Upload, Image as ImageIcon, Save } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 import { supabase } from '../lib/supabase';
 import type { LifeStoryEvent } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -51,9 +52,22 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
       const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `life_story/${fileName}`;
 
+      let fileToUpload = file;
+      if (!isVideo) {
+        try {
+          fileToUpload = await imageCompression(file, {
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          });
+        } catch (e) {
+          console.error('Image compression failed', e);
+        }
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('greetings_media')
-        .upload(filePath, file);
+        .upload(filePath, fileToUpload);
 
       if (uploadError) {
         if (uploadError.message.includes('maximum allowed size')) {
