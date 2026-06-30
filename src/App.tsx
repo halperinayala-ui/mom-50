@@ -1031,6 +1031,7 @@ export default function App() {
     if (window.confirm('לנעול את הברכה בחזרה? (לצרכי בדיקה)')) {
       try {
         await supabase.from('greetings').delete().eq('content', 'REVEAL_GIFT_50_MOM_SECRET_CODE');
+        localStorage.removeItem('hasSeenSpecialGreeting');
         toast.success('הברכה ננעלה חזרה!');
         setTimeout(() => window.location.reload(), 1500);
       } catch (e) {
