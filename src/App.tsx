@@ -15,7 +15,7 @@ import { BirthdayScreen } from './components/BirthdayScreen';
 
 // --- FEATURE FLAGS ---
 // Toggle this to true to show the birthday screen instead of boarding pass
-const isBirthdayActive = false;
+const isBirthdayActive = true;
 import { AddStoryEventModal } from './components/AddStoryEventModal';
 import { BottomNav } from './components/BottomNav';
 import type { ActiveScreen } from './components/BottomNav';
@@ -617,7 +617,12 @@ export default function App() {
           const fileExt = f.name.split('.').pop() || 'jpg';
           const fileName = `${uuidv4()}.${fileExt}`;
           const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, f);
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            if (uploadError.message.includes('maximum allowed size')) {
+              throw new Error('אחד הקבצים גדול מדי. אנא הגדילו את המגבלה ב-Supabase.');
+            }
+            throw uploadError;
+          }
           const { data: { publicUrl } } = supabase.storage.from('greetings_media').getPublicUrl(fileName);
           const fType = f.type.startsWith('video/') ? 'video' : 'image';
           return { url: publicUrl, type: fType as 'image'|'video' };
@@ -631,7 +636,12 @@ export default function App() {
         const fileExt = file instanceof File ? file.name.split('.').pop() : 'webm';
         const fileName = `${uuidv4()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('greetings_media').upload(fileName, file);
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          if (uploadError.message.includes('maximum allowed size')) {
+            throw new Error('הסרטון גדול מדי. יש להגדיל את מגבלת הגודל (Maximum allowed file size) ב-Storage ב-Supabase.');
+          }
+          throw uploadError;
+        }
         const { data: { publicUrl } } = supabase.storage.from('greetings_media').getPublicUrl(fileName);
         media_url = publicUrl;
         if (oldFilename) {

@@ -56,6 +56,9 @@ export function AddStoryEventModal({ onClose, onSuccess, initialEvent }: Props) 
         .upload(filePath, file);
 
       if (uploadError) {
+        if (uploadError.message.includes('maximum allowed size')) {
+          throw new Error('אחד הקבצים גדול מדי. אנא הגדילו את המגבלה (Maximum allowed file size) ב-Supabase.');
+        }
         throw uploadError;
       }
 
