@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { sender } = req.body;
+  const { sender, url } = req.body;
 
   try {
     // Only fetch subscriptions for Ayala
@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: `ברכה חדשה מאת ${sender} ממתינה לאישור שלך במערכת`,
       icon: '/icon-192.png',
       data: {
-        url: '/'
+        url: url || '/'
       }
     });
 

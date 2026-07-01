@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { title, body, sender } = req.body;
+  const { title, body, sender, url } = req.body;
 
   try {
     const { data: subscriptions, error } = await supabase
@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: body || `ברכה חדשה מ-${sender}`,
       icon: '/icon-192.png',
       data: {
-        url: '/'
+        url: url || '/'
       }
     });
 

@@ -80,9 +80,10 @@ export function GuestUploadScreen({ guestName }: GuestUploadScreenProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          sender: senderInput.trim()
+          sender: senderInput.trim(),
+          url: `/?tab=greetings` 
         })
-      }).catch(err => console.error('Error triggering admin push notification', err));
+      }).catch(console.error);
 
       toast.success('הברכה נשלחה בהצלחה!', { id: toastId });
       setIsSuccess(true);
